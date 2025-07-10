@@ -1,0 +1,54 @@
+begin(QRSpeciality,status, SPs, SP)
+
+    // {
+    //     "Specialities": [
+    //         {
+    //             "SpecialityID": "24",
+    //             "SpecialityName": "Инфекционные болезни"
+    //         }
+    // }
+
+    @SPs := new MP.V021_SPECIALTIES();
+    @status:=200;
+    try 
+    begin()
+
+
+        // if(@patID<>Null() and @patID<>"") 
+        // begin()
+            @QRSpeciality := query {Id},{Name}
+                                from "AKUZ.V021_SPECIALITY"
+                            where {DateEnd} = Null(); 
+            if (@QRSpeciality->Count()>0) 
+            foreach(thisqr in @QRSpeciality)
+            begin()
+                @SP := new MP.V021_SPECIALITY();
+                @SP -> {SpecialityID} := @thisqr -> {Id};
+                @SP -> {SpecialityName} := @thisqr -> {Name};
+                @SPs-> {Specialities} -> Add(@SP);
+            end
+            else
+                @SPs -> {error} := "Нет специальностей";
+        // end;
+
+        //@SPs:=Replace(Str(@SPs,"Json"),"\"flags_\":\"1\",","");   
+        return(@SPs);
+    end
+    catch(ex)
+    begin()
+
+        @ex := IsNull(@ex->{InnerException}->{InnerException}->{InnerException}->{InnerException},
+                IsNull(@ex->{InnerException}->{InnerException}->{InnerException},
+                IsNull(@ex->{InnerException}->{InnerException},
+                IsNull(@ex->{InnerException},@ex))));
+    
+        @status:=500;
+        @SPs->{error} := @ex-> {InnerException};//@ex->{InnerException};//
+        return(@SPs);
+
+    end;
+
+    
+end;
+
+

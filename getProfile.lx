@@ -1,0 +1,195 @@
+// 
+begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
+    
+    try 
+    begin()
+
+        @patID := @querystring["patId"];
+        // ТТестовый Пациент Ребенок 2020-10-16
+        // b62e9f22-a871-4c52-96d6-559c707a716d
+        @patProfile := new MP.PATIENT_PROFILE();
+        @status:=200;
+
+        if(@patID<>Null() and @patID<>"") 
+        begin()
+            //------- PATIENT -------//
+            @qrPats := query {PatientID}
+                ,{SNILS / Snils}
+                ,{LastName},{FirstName}
+                ,{FatherName}
+                ,{Birthday}
+                ,{Sex / ShortName}
+                // ,{Policys / IssueDate}
+                // ,{Policys / ValidThrough}
+                // ,{Policys / Serial}
+                // ,{Policys / Number}
+                // ,{Policys / InsuranceCompany / InsuranceType}
+                // ,{DocType / EnumID}
+                ,{DocType / Name}
+                ,{DocType / Code}
+                ,{DocSeries}
+                ,{DocNumber}
+
+                // ,{OmsPolicy / Serial}
+                ,{OmsPolicy / Number}
+                // ,{OmsPolicy / PolicyForm}
+
+                // ,{OmsPolicy / Insurer / ShortName}
+                // ,{OmsPolicy / InsuranceCompany / Code}
+                // ,{OmsPolicy / Insurer / SmoCod}
+                // ,{OmsPolicy / InsuranceCompany / Insurer / SmoCod}
+                // ,{OmsPolicy / InsuranceCompany / Insurer / ShortName}
+
+                ,{AddressReal / Address}
+                // ,{AddressReal / HouseGUID}
+                // ,{AddressLegal / Address}
+                // ,{AddressLegal / HouseGUID}
+                ,{AddressReal / FreeAddressString}
+                ,{AddressLegal / FreeAddressString}
+                ,{Registration / LpuMain / Name}
+                ,{Registration / LpuMain / EhrRusMdr308 / oid}
+
+                // ,{PhoneNumbers / PhoneType}
+                // ,{PhoneNumbers / Number} 
+                ,{PhoneNumbersString}
+
+                ,{PatientParents}
+                // ,{PatientParents / Patient / PatientID}
+                ,{PatientParents / Snils}
+                ,{PatientParents / Filiation / Name}
+                ,{PatientParents / IsGuardian}
+                ,{PatientParents / IsTrustee}
+                ,{PatientParents / FIO}
+                ,{PatientParents / MobilePhone}
+                ,{PatientParents / CurrentRepresentative}
+                from "AKUZ.PATIENT" where {PatientID} = @patID;
+
+
+            // ============== JSON структура  ==========
+            //{
+            //    "id": "a0a5284e-3afd-4dce-aa3a-5c34a85e15de",   // идентификатор
+            //    "SNILS": "000-000-000 03",  // СНИЛС
+            //    "lastName": "Тестовый",     // Фамилия
+            //    "firstName": "Пациент",     // Имя
+            //    "middleName": "Тестович",   // Отчество
+            //    "birthDate": "1976-05-17",  // дата рождения
+            //    "gender": "М",              // пол
+            //    "docType": "Паспорт",       // тип документа // по какому справочнику выгружать
+            //    "docSer": "11 11",          // серия документа
+            //    "docNum": "111111",         // номер документа
+            //    "ENP": "1653240333000333",  // Единый номер полиса ОМС (16-ти значный)
+            //    "addressReal": "string",    // адрес проживания
+            //    "attachBranchId": "string",  // идентификатор СТП
+            //    "attachState" : 99,         // номер участка
+            //    "trustedPersons": [ 
+            //        {
+            //            "parentSnils": "string",
+            //            "represType" : "Мать/Отец/Иной родственник/Не родственник", // Вид родства
+            //            "fullName": "string",   // FIO
+            //            "phone": "string",      // Мобильный телефон
+            //            "IsGuardian" : "",      // Опекун
+            //            "IsTrustee" : "",       // Попечитель
+            //            "status": "string"      // Текущий представитель CurrentRepresentative
+            //        }
+            //    ]
+            //}
+            // {patients / id};{patients / SNILS};{patients / lastName};{patients / firstName};{patients / middleName};{patients / birthDate};{patients / gender};{patients / docType};{patients / docSer};{patients / docNum};{patients / docDate};{patients / docOrg};{patients / polisType};{patients / polSer};{patients / polNum};{patients / insCode};{patients / insName};{patients / phones};{patients / address1};{patients / address2};{error / code};{error / message}
+            // {id};{SNILS};{lastName};{firstName};{middleName};{birthDate};{gender};{docType};{docSer};{docNum};{docDate};{docOrg};{polisType};{polSer};{polNum};{insCode};{insName};{phones};{address1};{address2};{error / code};{error / message}
+            //$throw ("йцввйцвйцвйв");
+            // @patProfile := new MP.PATIENT_PROFILE();
+
+            if (@qrPats->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
+            foreach(thisPatnt in @qrPats)
+            begin()
+
+                @patProfile->{id} := @thisPatnt-> {PatientID};
+                if(@thisPatnt->{SNILS / Snils} <> "" and @thisPatnt->{SNILS / Snils}<>"              ") @patProfile->{SNILS} := @thisPatnt-> {SNILS / Snils};
+                @patProfile->{lastName} := @thisPatnt->{LastName};
+                @patProfile->{firstName} := @thisPatnt->{FirstName};
+                if(@thisPatnt->{FatherName} <> Null()) @patProfile->{middleName} := @thisPatnt->{FatherName};
+                @patProfile->{birthDate} := Str(@thisPatnt->{Birthday},"yyyy-MM-dd");
+                @patProfile->{gender} := @thisPatnt->{Sex / ShortName};
+
+                //     @dt := @thisPatnt->{DocType / EnumID};
+                //     @dtEhr := (query top 1 {EhrRusNn5meatu5t / IdEHR} from "EHR.EHR_TYPE_MATCHING_DUL" where {DocType / EnumID} = @dt);
+                //     //-- 1.2.643.5.1.13.13.99.2.48 v6.2 // NN5MEATU5T //Документы, удостоверяющие личность;
+                // if (@dt <> 10599 and @dtEhr->Count()>0) @patProfile->{docType} := @dtEhr[0]->{EhrRusNn5meatu5t / IdEHR};
+                if (@thisPatnt->{DocType / Name} <> "БЕЗ ДОКУМЕНТА") @patProfile->{docType} := @thisPatnt -> {DocType / Name};
+
+                if(@thisPatnt->{DocSeries}<>Null()) @patProfile->{docSer} := @thisPatnt->{DocSeries};
+                if(@thisPatnt->{DocNumber}<>Null()) @patProfile->{docNum} := @thisPatnt->{DocNumber};
+                // if(@thisPatnt->{DocIssueDate}<>Null()) @patProfile->{docDate} := @thisPatnt->Str({DocIssueDate},"yyyy-MM-dd");
+                // if(@thisPatnt->{DocIssueOrg}<>Null()) @patProfile->{docOrg} := @thisPatnt->{DocIssueOrg};
+
+                // if(@thisPatnt->{OmsPolicy / Serial}<>Null()) @patProfile->{polSer} := @thisPatnt->{OmsPolicy / Serial};
+                // if(@thisPatnt->{OmsPolicy / Number}<>Null()) @patProfile->{polNum} := @thisPatnt->{OmsPolicy / Number};
+                //if(@thisPatnt->{OmsPolicy / Number}<>Null()) @patProfile->{polisOms} := IsNull(@thisPatnt->{OmsPolicy / Serial},"",@thisPatnt->{OmsPolicy / Serial}+"|") + @thisPatnt->{OmsPolicy / Number};
+                // if(@thisPatnt->{OmsPolicy / PolicyForm}<>Null()) @patProfile->{polisType} := @thisPatnt->{OmsPolicy / PolicyForm};
+                
+                // if(@thisPatnt->{OmsPolicy / InsuranceCompany} <>Null()) @patProfile->{insCode} := (if (@thisPatnt->{OmsPolicy / InsuranceCompany / Code} = "99") @thisPatnt->{OmsPolicy / Insurer / SmoCod} else @thisPatnt->{OmsPolicy / InsuranceCompany / Insurer / SmoCod});
+                // if(@thisPatnt->{OmsPolicy / InsuranceCompany} <>Null()) @patProfile->{insName} := (if (@thisPatnt->{OmsPolicy / InsuranceCompany / Code} = "99") @thisPatnt->{OmsPolicy / Insurer / ShortName} else @thisPatnt->{OmsPolicy / InsuranceCompany / Insurer / ShortName});
+
+                // if(@thisPatnt->{PhoneNumbersString}<>Null()) @patProfile->{phones} := @thisPatnt->{PhoneNumbersString};
+                // addressReal - Проживание
+                @patProfile->{addressReal} := if (@thisPatnt->{AddressReal / FreeAddressString} <> "") @thisPatnt->{AddressReal / FreeAddressString} else  @thisPatnt->{AddressReal/DisplayName};
+                //-- addr1_houseguid
+                // if(@thisPatnt->{AddressReal / HouseGUID}<>Null()) @patProfile->{addr1_houseguid} := @thisPatnt->{AddressReal / HouseGUID};
+                
+                // @patProfile->{address2} := if (@thisPatnt->{AddressLegal / FreeAddressString} <> "") @thisPatnt->{AddressLegal / FreeAddressString} else  @thisPatnt->{AddressLegal/DisplayName};
+                //-- addr2_houseguid
+                // if(@thisPatnt->{AddressLegal / HouseGUID}<>Null()) @patProfile->{addr2_houseguid} := @thisPatnt->{AddressLegal / HouseGUID};
+
+                // if(@thisPatnt->{Registration / LpuMain / EhrRusMdr308 / oid}<>Null()) @patProfile->{regMOoid} := @thisPatnt->{Registration / LpuMain / EhrRusMdr308 / oid};
+                // if(@thisPatnt->{Registration / LpuMain / Name}<>Null()) @patProfile->{regMOname} := @thisPatnt->{Registration / LpuMain / Name};
+
+
+                @parents := @thisPatnt ->{PatientParents};
+                //$throw (str(@parents-> count()));
+                //@patProfile->{error} := str(@parents-> count());
+
+                foreach(thisParent in @parents)
+                begin()
+
+                    @parent := new MP.PAT_PARENT();
+                    @parent -> {parentSnils} := @thisParent ->{Snils};
+                    @parent -> {represType} := @thisParent ->{Filiation / Name}; //"Мать/Отец/Иной родственник/Не родственник", // Вид родства
+                    @parent -> {fullName} := @thisParent ->{FIO};
+                    @parent -> {phone} := @thisParent ->{MobilePhone};
+                    @parent -> {IsGuardian} := @thisParent ->{IsGuardian};        // Опекун
+                    @parent -> {IsTrustee} := @thisParent ->{IsTrustee};          // Попечитель
+                    @parent -> {status} := @thisParent ->{CurrentRepresentative}; // Текущий представитель
+
+                    @patProfile->{trustedPersons} -> Add(@parent);
+                end;
+
+                //@patProfile->{error} := Str(@patProfile,"Json");
+
+            end
+            else
+            begin()
+                @status:=206;
+                @patProfile->{error} := "Не найден пациент с указанным patId";
+            end;
+
+        end else 
+        begin()
+            @status:=206;
+            @patProfile->{error} := "Не указан параметр patId";
+        end;
+
+        return(@patProfile);
+    end
+    catch(ex)
+    begin()
+
+        @ex := IsNull(@ex->{InnerException}->{InnerException}->{InnerException}->{InnerException},
+                IsNull(@ex->{InnerException}->{InnerException}->{InnerException},
+                IsNull(@ex->{InnerException}->{InnerException},
+                IsNull(@ex->{InnerException},@ex))));
+    
+        @status:=500;
+        @patProfile->{error} := @ex-> {InnerException};//@ex->{InnerException};//
+        return(@patProfile);
+
+    end;
+end

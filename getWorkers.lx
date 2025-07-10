@@ -1,0 +1,145 @@
+// ТИС. Отдаю врачей по по ID МО или Филиала
+begin(isLpu,qrWrks,moWrkPosts,lpu,ms,arr,str,err) 
+
+////////////////// ПРИМЕР ОТВЕТА
+// [  // в МО ГАУЗ "Агрызская ЦРБ" есть хороший пример: departmentId=5f0080b7-3458-43d7-ab4c-4995dd561b5c
+//     {
+//         "id": "dc911302-5044-46f4-b935-c6ffd85eb68f",
+//         "SNILS": "059-486-659 26",
+//         "lastName": "Камашев",
+//         "firstName": "Владимир",
+//         "middleName": "Михайлович",
+//         "birthDate": "30.05.1961",
+//         "positions": [
+//             {
+//                 "id": "41019",
+//                 "dateBegin": "01.08.2022",
+//                 "departmentId": "10ea04ca-339a-4867-aab4-d9a83b7e9098",
+//                 "departmentName": "Поликлиника",
+//                 "positionName": "Врач-онколог",
+//                 "positionFedCode": "3037",
+//                 "positionRegName": "врач-онколог",
+//                 "positionSpecialityCode": "41",
+//                 "positionSpecialityName": "Онкология"
+//             },
+//             {
+//                 "id": "22383",
+//                 "dateBegin": "01.08.2022",
+//                 "departmentId": "8000ab2e-c207-425b-9ee0-492b8bc383e3",
+//                 "departmentName": "Стационар",
+//                 "positionName": "Врач-хирург",
+//                 "positionFedCode": "3086",
+//                 "positionRegName": "врач-хирург",
+//                 "positionSpecialityCode": "90",
+//                 "positionSpecialityName": "Хирургия"
+//             }
+//         ]
+//     }
+// ]
+
+
+
+
+try
+begin()
+    @lpu := @querystring["departmentId"];//077c8a28-ef23-41ad-a056-8f8bab4a6c61
+    //@lpu := "";
+    @str := "[";
+
+    if (RegularExpression("^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$", @lpu) > 0) 
+    begin()
+    
+    //------- Сотрудники по WORKER -------//
+    @isLpu := (query top 1 {LpuID} from "AKUZ.LPU_MAIN" //---- флаг для запроса. Отдавать сотрудников по МО
+                where {LpuSettings} <> Null() and {LpuID} = @lpu) -> Count();
+
+    @qrWrks := query {WorkerID},{Snils},{LastName},{FirstName},{FatherName},{Birthday} 
+        ,{Posts / DateBegin}
+        ,{Posts / DateEnd}
+        ,{Posts / Division / Branch / LpuMain / LpuID}
+        ,{Posts / Division / Branch / Name}
+        ,{Posts / PostType / Name}
+        ,{Posts / PostType / Code}
+        ,{Posts / PostType / EhrRusUk23amlfl7 / NameEHR}
+        ,{Posts / PostType / EhrRusUk23amlfl7 / IdEHR}
+        ,{Posts / V021Speciality / Id}
+        ,{Posts / V021Speciality / Name}
+        ,{Posts / Rate}
+        from "AKUZ.WORKER" where //{IsRedundant} = 0
+        ChildExists({Posts}, {DateBegin} <= param(CURRENT_DATE) 
+            and ({DateEnd} = Null() Or {DateEnd} >= param(CURRENT_DATE)) 
+            and (if (@isLpu>0) 
+                {Division / Branch / LpuMain / LpuID} else 
+                {Division / Branch / LpuID}) = @lpu);
+
+
+    if (@qrWrks->Count()>0)
+    foreach(thisWrkr in @qrWrks)
+    begin(worker)
+
+        @worker := new MP.MO_WORKERS();
+        @worker->{id} := @thisWrkr-> {WorkerID};
+        if(@thisWrkr->{Snils} <> "" and @thisWrkr->{Snils}<>"              ") @worker->{SNILS} := @thisWrkr-> {Snils};
+        @worker->{lastName} := @thisWrkr->{LastName};
+        @worker->{firstName} := @thisWrkr->{FirstName};
+        if(@thisWrkr->{FatherName} <> Null()) @worker->{middleName} := @thisWrkr->{FatherName};
+        if(@thisWrkr->{Birthday} <> Null()) @worker->{birthDate} := Str(@thisWrkr->{Birthday},"dd.MM.yyyy");
+        // positions
+        foreach(pst in @thisWrkr->{Posts}) 
+        //if (@pst-> {Division / Branch / LpuMain / LpuID} = @lpu And @pst->{DateBegin} <= param(CURRENT_DATE) And (@pst->{DateEnd} = Null() Or @pst->{DateEnd} >= param(CURRENT_DATE)) )
+        //if (@pst-> {Division / Branch / LpuMain / LpuID} = @lpu And @pst->{DateBegin} <= DateAdd("MONTH",-1,param(CURRENT_DATE)) And (@pst->{DateEnd} = Null() Or @pst->{DateEnd} >= DateAdd("MONTH",-1,param(CURRENT_DATE))) )
+        if ((if (@isLpu > 0) @pst->{Division / Branch / LpuMain / LpuID} else @pst->{Division / Branch / LpuID}) = @lpu And @pst->{DateBegin} <= DateAdd("MONTH",-1,param(CURRENT_DATE)) And (@pst->{DateEnd} = Null() Or @pst->{DateEnd} >= DateAdd("MONTH",-1,param(CURRENT_DATE))) )
+        begin(moWrkPosts)
+
+        @moWrkPosts := new MP.MO_WKR_POSTS();
+            @moWrkPosts->{id} := @pst->{ResourceID};
+            @moWrkPosts->{dateBegin} := Str(@pst->{DateBegin},"dd.MM.yyyy");
+            if(@pst->{DateEnd} <> Null() )@moWrkPosts->{dateEnd} := Str(@pst->{DateEnd},"dd.MM.yyyy");
+            @moWrkPosts->{departmentId} := @pst->{Division / Branch / LpuID}; // ВСЕГДА ID ФИЛИАЛА. не заменить ли на короткий какой-нибудь
+            @moWrkPosts->{departmentName} := @pst->{Division / Branch / Name}; // в 1 методе NameFull
+            @moWrkPosts->{positionName} := @pst-> {PostType / Name}; // Тип должности.Наименование // "Заведующий ФАП-фельдшер"
+            @moWrkPosts->{positionFedCode} := @pst-> {PostType / Code}; // Тип должности.Код    // "4007" 
+            @moWrkPosts->{positionRegName} := @pst->{PostType / EhrRusUk23amlfl7 / NameEHR}; // ФРМР. Должности медицинского персонала   // "Заведующий фельдшерско-акушерским пунктом - фельдшер (акушер/акушерка, медицинская сестра/медицинский брат (медбрат)"
+            if(@pst->{V021Speciality}<>Null()) @moWrkPosts->{positionSpecialityCode} := @pst->{V021Speciality / Id};
+            if(@pst->{V021Speciality}<>Null()) @moWrkPosts->{positionSpecialityName} := @pst->{V021Speciality / Name};
+            @moWrkPosts->{rate} := @pst->{Rate};
+
+            @worker->{positions} -> Add(@moWrkPosts);
+
+        end;
+
+        @ms := new MemoryStream();
+        @worker.WriteAsJson(@ms, .{{id},{SNILS},{lastName},{firstName},{middleName},{birthDate},{positions/id},{positions/dateBegin},{positions/dateEnd},{positions/departmentId},{positions/departmentName},{positions/positionName},{positions/positionFedCode},{positions/positionRegName},{positions/positionSpecialityCode},{positions/positionSpecialityName},{positions/rate} });
+        @arr := @ms.ToArray();
+        
+        @str := @str + Str(@arr, "ByteToUTF8") + ",";
+        end
+        else begin()
+        @err := new COMMON.ERROR();
+            @err-> {code} := "02";
+            @err-> {message} := "В базе отсутствует подразделение (МО или филиал) с указанным идентификатором, либо оно не активно";
+        end;
+    end
+    else begin() //-- КРИВОЙ ПАРАМЕТР
+        @err := new COMMON.ERROR();
+        @err-> {code} := "01";
+        @err-> {message} := "Параметр departmentId имеет неверный формат";
+    end;
+
+    @str := Substring(@str,0,StringLen(@str)-if(@qrWrks->count()=0) 0 else 1) + "]"; // дописал для count()=0
+    if (@err <> Null()) return(@err) else return(@str);
+
+end
+catch(ex)
+begin()
+    @err := new COMMON.ERROR();
+    @err -> {code} := "99";
+    @ex := IsNull(@ex->{InnerException}->{InnerException}->{InnerException}->{InnerException},
+            IsNull(@ex->{InnerException}->{InnerException}->{InnerException},
+            IsNull(@ex->{InnerException}->{InnerException},
+            IsNull(@ex->{InnerException},@ex))));
+    @err-> {message} := @ex->{Message};
+    return(@err);
+end;
+
+end
