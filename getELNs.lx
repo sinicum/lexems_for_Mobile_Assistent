@@ -1,5 +1,5 @@
 
-begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,status)
+begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,status)
 
     try 
     begin()
@@ -8,7 +8,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,status)
         
         @patSNILS := select {SNILS / SnilsID} from "AKUZ.PATIENT" where {PatientID} = @patID;
 
-
+ //$throw(@patSNILS[0][0]);
         @ELNsMain := new MP.MED_CERTS_LIST();
         @ELN := new MP.MED_CERT();
         @ELNprlngtion := new MP.MED_CERT_PROLONGATION();
@@ -18,11 +18,11 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,status)
         begin()
 
             // if (RegularExpression("^[0-9]{3}-[0-9]{3}-[0-9]{3} [0-9]{2}$", @snils) > 0 and @snils<>"000-000-000 00") 
-            if(@patSNILS <>Null()) 
-            begin()
-                @patSNILS := Substring(@patSNILS[0][0],0,3)+Substring(@patSNILS[0][0],4,3) +Substring(@patSNILS[0][0],8,3) +Substring(@patSNILS[0][0],12,2)
-            end
-            else $throw("НЕ НАЙДЕН СНИЛС");
+            // if(@patSNILS <>Null()) 
+            // begin()
+            //     @patSNILS := Substring(@patSNILS[0][0],0,3)+Substring(@patSNILS[0][0],4,3) +Substring(@patSNILS[0][0],8,3) +Substring(@patSNILS[0][0],12,2)
+            // end
+            // else $throw("НЕ НАЙДЕН СНИЛС");
 
             //------- MEDICAL_CERTIFICATE -------//
             @qrMedCerts := query {CertificateNumber}
@@ -45,7 +45,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,status)
                                 ,{FssLnStatus}
                                 ,{SentSNILS}
 
-                from "AKUZ.MEDICAL_CERTIFICATE" where {SentSNILS} = @patSNILS
+                from "AKUZ.MEDICAL_CERTIFICATE" where {AmbulanceCard / Patient / PatientID} = @patID//where {SentSNILS} = @patSNILS
                     and ({FssLnStatus} = 10 
                         Or {FssLnStatus} = 20 
                         Or {FssLnStatus} = 30 
@@ -90,13 +90,13 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,status)
                 //$throw (str(@parents-> count()));
                 //@ELN->{error} := str(@parents-> count());
 
-                foreach(thisParent in @parents)
+                foreach(thisProlong in @MedCertProlongs)
                 begin()
 
                     @ELNprlngtion := new MP.MED_CERT_PROLONGATION(); 
                     
-                    @ELNprlngtion -> {represType} := @thisParent ->{Filiation / Name}; //"Мать/Отец/Иной родственник/Не родственник", // Вид родства
-                    @ELNprlngtion -> {fullName} := @thisParent ->{FIO};
+                    @ELNprlngtion -> {StartDate} := @thisProlong ->{MedicalCertificateProlongations / ProlongationStartDate};
+                    @ELNprlngtion -> {ProlongationDate} := @thisProlong ->{MedicalCertificateProlongations / ProlongationDate};
 
                     @ELN->{Prolongations} -> Add(@ELNprlngtion);
                 end;
@@ -131,7 +131,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,status)
     
         @status:=500;
         @response.StatusCode:=@status;
-        @ELNsMain->{error} :=  Str(@ELN,"Json");//@ex-> {InnerException};//@ex->{InnerException};//
+        @ELNsMain->{error} :=  @ex-> {InnerException};//  Str(@ELN,"Json");
         return(@ELNsMain);
 
     end;
