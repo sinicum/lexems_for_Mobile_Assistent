@@ -1,0 +1,138 @@
+
+begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,status)
+
+    try 
+    begin()
+        
+        @patID := @querystring["patId"];
+        
+        @patSNILS := select {SNILS / SnilsID} from "AKUZ.PATIENT" where {PatientID} = @patID;
+
+
+        @ELNsMain := new MP.MED_CERTS_LIST();
+        @ELN := new MP.MED_CERT();
+        @ELNprlngtion := new MP.MED_CERT_PROLONGATION();
+
+
+        if(@patID<>Null() and @patID<>"") 
+        begin()
+
+            // if (RegularExpression("^[0-9]{3}-[0-9]{3}-[0-9]{3} [0-9]{2}$", @snils) > 0 and @snils<>"000-000-000 00") 
+            if(@patSNILS <>Null()) 
+            begin()
+                @patSNILS := Substring(@patSNILS[0][0],0,3)+Substring(@patSNILS[0][0],4,3) +Substring(@patSNILS[0][0],8,3) +Substring(@patSNILS[0][0],12,2)
+            end
+            else $throw("НЕ НАЙДЕН СНИЛС");
+
+            //------- MEDICAL_CERTIFICATE -------//
+            @qrMedCerts := query {CertificateNumber}
+                                ,{OpenDate}
+                                ,{MedicalCertificateClose / DateClose}
+                                ,{MedicalCertificateProlongations / ProlongationDate}
+                                ,{MedicalCertificateClose / WorkDate}
+                                ,{DaysCount}
+                                ,{MedicalCertificatesCauses / Name}
+                                
+                                ,{MedicalCertificateProlongations / ProlongationStartDate}
+                                ,{MedicalCertificateProlongations / ProlongationDate}
+                                ,{MedicalCertificateProlongations / Post / Worker/FIO}
+                                ,{MedicalCertificateProlongations / Post / Speciality / Name}
+
+                                ,{CardLpuName}
+                                ,{BranchAddressString}
+
+
+                                ,{FssLnStatus}
+                                ,{SentSNILS}
+
+                from "AKUZ.MEDICAL_CERTIFICATE" where {SentSNILS} = @patSNILS
+                    and ({FssLnStatus} = 10 
+                        Or {FssLnStatus} = 20 
+                        Or {FssLnStatus} = 30 
+                        Or {FssLnStatus} = 40 
+                        Or {FssLnStatus} = 50
+                        );
+
+
+            // ============== JSON структура  ==========
+            //{
+            //    "PatientELNs": [ 
+            //        {
+            //            "Number": "String"                // Номер листа нетрудоспособности
+            //            "OpenDate": "dd-MM-yyyy",         // Дата открытия
+            //            "DateClose": "dd-MM-yyyy",        // Дата закрытия
+            //            "ProlongationDate": "dd-MM-yyyy", // Дата продления до
+            //            "WorkDate": "dd-MM-yyyy",         // Дата выхода на работу
+            //            "DaysCount" : Int,                // Количество дней нетрудоспособности
+            //            "Cause": "string",               // Причина нетрудоспособности
+            //            "Prolongations", [                // Продления
+            //                "StartDate": "dd-MM-yyyy",        // Дата продления с
+            //                "ProlongationDate": "dd-MM-yyyy", // Дата продления до
+            //                "Post": "dd-MM-yyyy",             // Врач
+            //            ]
+            //            "LpuName": "string",              // Наименование МО
+            //            "BranchAddress" : "string",       // Адресс СП МО
+            //        }
+            //    ]
+            //}
+
+
+            if (@qrMedCerts->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
+            foreach(thisMedCert in @qrMedCerts)
+            begin()
+                @ELN->{Number} := @thisMedCert ->{CertificateNumber};
+                @ELN->{OpenDate} := Str(@thisMedCert->{OpenDate},"yyyy-MM-dd");
+                //if(@thisMedCert->{SNILS / Snils} <> "" and @thisMedCert->{SNILS / Snils}<>"              ") @ELN->{SNILS} := @thisMedCert-> {SNILS / Snils};
+
+
+
+                @MedCertProlongs := @thisMedCert ->{MedicalCertificateProlongations};
+                //$throw (str(@parents-> count()));
+                //@ELN->{error} := str(@parents-> count());
+
+                foreach(thisParent in @parents)
+                begin()
+
+                    @ELNprlngtion := new MP.MED_CERT_PROLONGATION(); 
+                    
+                    @ELNprlngtion -> {represType} := @thisParent ->{Filiation / Name}; //"Мать/Отец/Иной родственник/Не родственник", // Вид родства
+                    @ELNprlngtion -> {fullName} := @thisParent ->{FIO};
+
+                    @ELN->{Prolongations} -> Add(@ELNprlngtion);
+                end;
+
+                @ELNsMain->{ELNs} -> Add(@ELN);
+                //@ELNsMain->{error} := Str(@ELN,"Json");
+
+            end
+            else
+            begin()
+                @status:=206;
+                @ELNsMain->{error} := "Не найдены ЭЛН по указанному patId";
+            end;
+
+        end else 
+        begin()
+            @status:=206;
+            @ELNsMain->{error} := "Не указан параметр patId";
+        end;
+
+        
+        @response.StatusCode:=@status;
+        return(@ELNsMain);
+    end
+    catch(ex)
+    begin()
+
+        // @ex := IsNull(@ex->{InnerException}->{InnerException}->{InnerException}->{InnerException},
+        //         IsNull(@ex->{InnerException}->{InnerException}->{InnerException},
+        //         IsNull(@ex->{InnerException}->{InnerException},
+        //         IsNull(@ex->{InnerException},@ex))));
+    
+        @status:=500;
+        @response.StatusCode:=@status;
+        @ELNsMain->{error} :=  Str(@ELN,"Json");//@ex-> {InnerException};//@ex->{InnerException};//
+        return(@ELNsMain);
+
+    end;
+end
