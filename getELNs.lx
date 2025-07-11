@@ -10,7 +10,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
 
  //$throw(@patSNILS[0][0]);
         @ELNsMain := new MP.MED_CERTS_LIST();
-        @ELN := new MP.MED_CERT();
+        
         @ELNprlngtion := new MP.MED_CERT_PROLONGATION();
 
 
@@ -80,6 +80,8 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
             if (@qrMedCerts->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
             foreach(thisMedCert in @qrMedCerts)
             begin()
+
+                @ELN := new MP.MED_CERT();
                 @ELN->{Number} := @thisMedCert ->{CertificateNumber};
                 @ELN->{OpenDate} := Str(@thisMedCert->{OpenDate},"yyyy-MM-dd");
                 //if(@thisMedCert->{SNILS / Snils} <> "" and @thisMedCert->{SNILS / Snils}<>"              ") @ELN->{SNILS} := @thisMedCert-> {SNILS / Snils};
@@ -95,8 +97,8 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
 
                     @ELNprlngtion := new MP.MED_CERT_PROLONGATION(); 
                     
-                    @ELNprlngtion -> {StartDate} := @thisProlong ->{MedicalCertificateProlongations / ProlongationStartDate};
-                    @ELNprlngtion -> {ProlongationDate} := @thisProlong ->{MedicalCertificateProlongations / ProlongationDate};
+                    @ELNprlngtion -> {StartDate} := @thisProlong ->{ProlongationStartDate};
+                    @ELNprlngtion -> {ProlongationDate} := @thisProlong ->{ProlongationDate};
 
                     @ELN->{Prolongations} -> Add(@ELNprlngtion);
                 end;
