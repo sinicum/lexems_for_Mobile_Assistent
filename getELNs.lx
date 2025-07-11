@@ -5,13 +5,13 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
     begin()
         
         @patID := @querystring["patId"];
-        
+        @status := 200;
         @patSNILS := select {SNILS / SnilsID} from "AKUZ.PATIENT" where {PatientID} = @patID;
 
  //$throw(@patSNILS[0][0]);
         @ELNsMain := new MP.MED_CERTS_LIST();
         
-        @ELNprlngtion := new MP.MED_CERT_PROLONGATION();
+
 
 
         if(@patID<>Null() and @patID<>"") 
@@ -28,7 +28,6 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
             @qrMedCerts := query {CertificateNumber}
                                 ,{OpenDate}
                                 ,{MedicalCertificateClose / DateClose}
-                                ,{MedicalCertificateProlongations / ProlongationDate}
                                 ,{MedicalCertificateClose / WorkDate}
                                 ,{DaysCount}
                                 ,{MedicalCertificatesCauses / Name}
@@ -84,6 +83,10 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
                 @ELN := new MP.MED_CERT();
                 @ELN->{Number} := @thisMedCert ->{CertificateNumber};
                 @ELN->{OpenDate} := Str(@thisMedCert->{OpenDate},"yyyy-MM-dd");
+                @ELN->{DateClose} := Str(@thisMedCert->{MedicalCertificateClose / DateClose},"yyyy-MM-dd");
+                @ELN->{ProlongationDate} := Str(@thisMedCert->ChildCount({MedicalCertificateProlongations}, First({ProlongationDate}), Null(), {ProlongationDate}, "desc"),"yyyy-MM-dd");
+                @ELN->{Cause} := @thisMedCert->{MedicalCertificatesCauses / Name};
+                @ELN->{DaysCount} := @thisMedCert ->{DaysCount};
                 //if(@thisMedCert->{SNILS / Snils} <> "" and @thisMedCert->{SNILS / Snils}<>"              ") @ELN->{SNILS} := @thisMedCert-> {SNILS / Snils};
 
 
@@ -97,11 +100,14 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
 
                     @ELNprlngtion := new MP.MED_CERT_PROLONGATION(); 
                     
-                    @ELNprlngtion -> {StartDate} := @thisProlong ->{ProlongationStartDate};
-                    @ELNprlngtion -> {ProlongationDate} := @thisProlong ->{ProlongationDate};
+                    @ELNprlngtion -> {StartDate} := Str(@thisProlong ->{ProlongationStartDate},"yyyy-MM-dd");
+                    @ELNprlngtion -> {ProlongationDate} := Str(@thisProlong ->{ProlongationDate},"yyyy-MM-dd");
+                    @ELNprlngtion -> {Post} := @thisProlong ->{Post / DisplayName};
 
                     @ELN->{Prolongations} -> Add(@ELNprlngtion);
                 end;
+
+
 
                 @ELNsMain->{ELNs} -> Add(@ELN);
                 //@ELNsMain->{error} := Str(@ELN,"Json");
