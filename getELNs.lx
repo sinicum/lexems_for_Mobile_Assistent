@@ -10,8 +10,6 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
 
  //$throw(@patSNILS[0][0]);
         @ELNsMain := new MP.MED_CERTS_LIST();
-        
-
 
 
         if(@patID<>Null() and @patID<>"") 
@@ -44,12 +42,12 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
                                 ,{FssLnStatus}
                                 ,{SentSNILS}
 
-                from "AKUZ.MEDICAL_CERTIFICATE" where {AmbulanceCard / Patient / PatientID} = @patID//where {SentSNILS} = @patSNILS
-                    and ({FssLnStatus} = 10 
-                        Or {FssLnStatus} = 20 
-                        Or {FssLnStatus} = 30 
-                        Or {FssLnStatus} = 40 
-                        Or {FssLnStatus} = 50
+                from "AKUZ.MEDICAL_CERTIFICATE" where {AmbulanceCard / Patient / PatientID} = @patID //where {SentSNILS} = @patSNILS
+                    and ({FssLnStatus} = 10     // ЭЛН открыт
+                        Or {FssLnStatus} = 20   // ЭЛН продлен
+                        Or {FssLnStatus} = 30   // ЭЛН закрыт
+                        Or {FssLnStatus} = 40   // ЭЛН направление на МСЭ
+                        Or {FssLnStatus} = 50   // ЭЛН дополнен данными МСЭ
                         );
 
 
@@ -83,18 +81,13 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
                 @ELN := new MP.MED_CERT();
                 @ELN->{Number} := @thisMedCert ->{CertificateNumber};
                 @ELN->{OpenDate} := Str(@thisMedCert->{OpenDate},"yyyy-MM-dd");
-                @ELN->{DateClose} := Str(@thisMedCert->{MedicalCertificateClose / DateClose},"yyyy-MM-dd");
-                @ELN->{ProlongationDate} := Str(@thisMedCert->ChildCount({MedicalCertificateProlongations}, First({ProlongationDate}), Null(), {ProlongationDate}, "desc"),"yyyy-MM-dd");
-                @ELN->{Cause} := @thisMedCert->{MedicalCertificatesCauses / Name};
+                if(@thisMedCert->{MedicalCertificateClose / DateClose}= Null() ) @ELN->{ProlongationDate} := Str(@thisMedCert->ChildCount({MedicalCertificateProlongations}, First({ProlongationDate}), Null(), {ProlongationDate}, "desc"),"yyyy-MM-dd");
+                if(@thisMedCert->{MedicalCertificateClose / DateClose}<>Null() ) @ELN->{DateClose}:= Str(@thisMedCert->{MedicalCertificateClose / DateClose},"yyyy-MM-dd");
+                @ELN->{WorkDate} := Str(@thisMedCert->{MedicalCertificateClose / WorkDate},"yyyy-MM-dd");
                 @ELN->{DaysCount} := @thisMedCert ->{DaysCount};
-                //if(@thisMedCert->{SNILS / Snils} <> "" and @thisMedCert->{SNILS / Snils}<>"              ") @ELN->{SNILS} := @thisMedCert-> {SNILS / Snils};
-
-
-
+                @ELN->{Cause} := @thisMedCert->{MedicalCertificatesCauses / Name};
+                
                 @MedCertProlongs := @thisMedCert ->{MedicalCertificateProlongations};
-                //$throw (str(@parents-> count()));
-                //@ELN->{error} := str(@parents-> count());
-
                 foreach(thisProlong in @MedCertProlongs)
                 begin()
 
@@ -106,7 +99,10 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
 
                     @ELN->{Prolongations} -> Add(@ELNprlngtion);
                 end;
-
+                @ELN->{LpuName} := @thisMedCert ->{CardLpuName};
+                @ELN->{BranchAddress} := @thisMedCert ->{BranchAddressString};
+                @ELN->{FssLnStatus} := @thisMedCert ->{FssLnStatus};
+                @ELN->{SentSNILS} := @thisMedCert ->{SentSNILS};
 
 
                 @ELNsMain->{ELNs} -> Add(@ELN);
@@ -125,6 +121,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
             @ELNsMain->{error} := "Не указан параметр patId";
         end;
 
+        @ELNsMain->{error} := @patSNILS[0][0];
         
         @response.StatusCode:=@status;
         return(@ELNsMain);
