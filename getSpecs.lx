@@ -18,14 +18,15 @@ begin(QRSpeciality,status, SPs, SP)
         // begin()
             @QRSpeciality := query {Id},{Name}
                                 from "AKUZ.V021_SPECIALITY"
-                            where {DateEnd} = Null(); 
+                            where {DateEnd} = Null()
+                            order by {Id}; 
             if (@QRSpeciality->Count()>0) 
             foreach(thisqr in @QRSpeciality)
             begin()
                 @SP := new MP.V021_SPECIALITY();
                 @SP -> {SpecialityID} := @thisqr -> {Id};
                 @SP -> {SpecialityName} := @thisqr -> {Name};
-                @SPs-> {Specialities} -> Add(@SP);
+                @SPs-> {SpecialitiesV021} -> Add(@SP);
             end
             else
                 @SPs -> {error} := "Нет специальностей";

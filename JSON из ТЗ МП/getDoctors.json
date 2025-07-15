@@ -1,0 +1,11 @@
+{
+    "doctors": [
+        {
+            "id": string,
+            "fullName": string,
+            "position": string,
+            "hospitalAddress": string,
+            "office": string
+        }
+    ]
+}

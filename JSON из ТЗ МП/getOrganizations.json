@@ -1,0 +1,20 @@
+{
+    "organizations": [
+        {
+            "code": string,
+            "name": string,
+            "doctors": [
+                {
+                    "fullName": string,
+                    "snils": string,
+                    "specialties": [
+                        {
+                            "code": string,
+                            "name": string
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
