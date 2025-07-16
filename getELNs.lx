@@ -8,7 +8,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
         @status := 200;
         @patSNILS := select {SNILS / SnilsID} from "AKUZ.PATIENT" where {PatientID} = @patID;
 
- //$throw(@patSNILS[0][0]);
+        //$throw(@patSNILS[0][0]);
         @ELNsMain := new MP.MED_CERTS_LIST();
 
 
@@ -16,14 +16,15 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
         begin()
 
             // if (RegularExpression("^[0-9]{3}-[0-9]{3}-[0-9]{3} [0-9]{2}$", @snils) > 0 and @snils<>"000-000-000 00") 
-            // if(@patSNILS <>Null()) 
-            // begin()
-            //     @patSNILS := Substring(@patSNILS[0][0],0,3)+Substring(@patSNILS[0][0],4,3) +Substring(@patSNILS[0][0],8,3) +Substring(@patSNILS[0][0],12,2)
-            // end
-            // else $throw("НЕ НАЙДЕН СНИЛС");
+            if (@patSNILS[0][0] <>Null()) 
+            begin()
+                @patSNILS := Substring(@patSNILS[0][0],0,3)+Substring(@patSNILS[0][0],4,3) +Substring(@patSNILS[0][0],8,3) +Substring(@patSNILS[0][0],12,2)
+            end
+            else $throw("НЕ НАЙДЕН СНИЛС");
 
             //------- MEDICAL_CERTIFICATE -------//
-            @qrMedCerts := query {CertificateNumber}
+            @qrMedCerts := query {AmbulanceCard / Patient / SNILS / SnilsID}
+                                ,{CertificateNumber}
                                 ,{OpenDate}
                                 ,{MedicalCertificateClose / DateClose}
                                 ,{MedicalCertificateClose / WorkDate}
@@ -42,7 +43,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
                                 ,{FssLnStatus}
                                 ,{SentSNILS}
 
-                from "AKUZ.MEDICAL_CERTIFICATE" where {AmbulanceCard / Patient / PatientID} = @patID //where {SentSNILS} = @patSNILS
+                from "AKUZ.MEDICAL_CERTIFICATE" where {SentSNILS} = @patSNILS //where {AmbulanceCard / Patient / PatientID} = @patID 
                     and ({FssLnStatus} = 10     // ЭЛН открыт
                         Or {FssLnStatus} = 20   // ЭЛН продлен
                         Or {FssLnStatus} = 30   // ЭЛН закрыт
@@ -55,6 +56,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
             //{
             //    "PatientELNs": [ 
             //        {
+            //            "PatientSNILS":"string"           // СНИЛС болеющего
             //            "Number": "String"                // Номер листа нетрудоспособности
             //            "OpenDate": "dd-MM-yyyy",         // Дата открытия
             //            "DateClose": "dd-MM-yyyy",        // Дата закрытия
@@ -79,6 +81,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
             begin()
 
                 @ELN := new MP.MED_CERT();
+                @ELN->{PatientSNILS} := @thisMedCert ->{AmbulanceCard / Patient / SNILS / SnilsID};
                 @ELN->{Number} := @thisMedCert ->{CertificateNumber};
                 @ELN->{OpenDate} := Str(@thisMedCert->{OpenDate},"yyyy-MM-dd");
                 if(@thisMedCert->{MedicalCertificateClose / DateClose}= Null() ) @ELN->{ProlongationDate} := Str(@thisMedCert->ChildCount({MedicalCertificateProlongations}, First({ProlongationDate}), Null(), {ProlongationDate}, "desc"),"yyyy-MM-dd");
@@ -121,7 +124,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
             @ELNsMain->{error} := "Не указан параметр patId";
         end;
 
-        @ELNsMain->{error} := @patSNILS[0][0];
+        //@ELNsMain->{error} := IsNull(@patSNILS[0][0],"");
         
         @response.StatusCode:=@status;
         return(@ELNsMain);
