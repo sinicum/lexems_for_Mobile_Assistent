@@ -1,5 +1,5 @@
 
-begin(patID, RoutesList, routeRecords, Hosp, EmergEventID ,status)
+begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
 
     try 
     begin()
@@ -22,7 +22,7 @@ begin(patID, RoutesList, routeRecords, Hosp, EmergEventID ,status)
             //             from "AKUZ.EMERGENCY_EVENT" 
             //             where {AmbulanceCard / Patient / PatientID} = @patID;
             
-            @routeRecords := query {MedicalRecord}
+            @routeRecords := query {MedicalRecordID}
                                     ,{ObjectProperties / ObjectTypeID}
                                     ,{RouteDate} // Дата  создания
                                     ,{RecordTime}  //  и время создания
