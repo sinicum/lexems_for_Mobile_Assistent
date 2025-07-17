@@ -42,6 +42,8 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
                                     ,{EntryAmbulance / Resource / DisplayName}
                                     
                                     ,{ResultExits} 
+
+                                    ,{AmbulanceCard / CardLpu / Name}
                                     
                         from "AKUZ.ROUTE_RECORD" 
                         where {AmbulanceEvent / EventID} = @EmergEventID
@@ -78,7 +80,7 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
                 @Route->{CreationDateTime} := Str(@thisRoute->{RouteDate},"yyyy-MM-dd") + Str(@thisRoute->{RecordTime},"HH:mm");
 
                 @Route->{Name} := IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name}
-                    , @thisRoute-> {As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Speciality / Name} +" ["+ @thisRoute->{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Number}+"]"    
+                    , @thisRoute-> {As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Speciality / Name} +" ["+ Str(@thisRoute->{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Number})+"]"    
                     , @thisRoute-> {As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name} +" [" + IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / EconomicCode}, @thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Code})+"]") 
                     ;
 
