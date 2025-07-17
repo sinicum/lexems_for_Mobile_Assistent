@@ -1,4 +1,4 @@
-Метод /getHosps
+// Метод /getHosps -- Список предыдущих госпитализаций
 begin(patID, HospList, Hosp, qrEmergEvent ,status)
 
     try 
