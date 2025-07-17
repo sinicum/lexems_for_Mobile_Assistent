@@ -1,4 +1,4 @@
-
+Метод /getHosps
 begin(patID, HospList, Hosp, qrEmergEvent ,status)
 
     try 
@@ -8,7 +8,7 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
         @status := 200;
         
 
- //$throw(@patSNILS[0][0]);
+        //$throw(@patSNILS[0][0]);
         @HospList := new MP.HOSPS_LIST();
 
 
