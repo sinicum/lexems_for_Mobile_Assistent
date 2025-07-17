@@ -43,7 +43,10 @@ begin(patID, RoutesList, routeRecords, Hosp, EmergEventID ,status)
                                     ,{ResultExits} 
                                     
                         from "AKUZ.ROUTE_RECORD" 
-                        where {AmbulanceEvent / EventID} = @EmergEventID[0][0];
+                        where {AmbulanceEvent / EventID} = @EmergEventID[0][0]
+                            and ({ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION"
+                                or {ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DIAGNOSTICS"
+                            );
 
 
             // ============== JSON структура  ==========
@@ -66,16 +69,16 @@ begin(patID, RoutesList, routeRecords, Hosp, EmergEventID ,status)
 
             if (@routeRecords->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
             foreach(thisRoute in @routeRecords)
-            if(@thisRoute ->{ObjectProperties / ObjectTypeID} IN "AKUZ.ROUTE_TO_DOCTOR_INSPECTION")
+            //if(@thisRoute ->{ObjectProperties / ObjectTypeID} IN "AKUZ.ROUTE_TO_DOCTOR_INSPECTION")
             begin()
 
                 @Route := new MP.ROUTE();
                 @Route->{Type} := @thisRoute ->{ObjectProperties / ObjectTypeID};
-                @Route->{CreationDateTime} := Str(@thisRoute->{{RouteDate}},"yyyy-MM-dd") + Str(@thisRoute->{{RecordTime}},"HH:mm");
+                @Route->{CreationDateTime} := Str(@thisRoute->{RouteDate},"yyyy-MM-dd") + Str(@thisRoute->{RecordTime},"HH:mm");
 
                 @Route->{Name} := IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name}
-                    , @thisRoute-> {As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Speciality / Name} +" ["@thisRoute->{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Number}+"]"    
-                    , @thisRoute-> {As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name} +" [" + IsNull({As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / EconomicCode}, {As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Code})+"]") 
+                    , @thisRoute-> {As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Speciality / Name} +" ["+ @thisRoute->{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Number}+"]"    
+                    , @thisRoute-> {As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name} +" [" + IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / EconomicCode}, @thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Code})+"]") 
                     ;
 
                 @Route->{Place} := "Каб.№" +{EntryAmbulance / Place}+ " "+ {EntryAmbulance / Resource / DisplayName};
