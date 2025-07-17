@@ -24,7 +24,8 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
             //             where {AmbulanceCard / Patient / PatientID} = @patID;
             
             @routeRecords := query {MedicalRecordID}
-                                    ,{ObjectProperties / ObjectTypeID}
+                                    //,{ObjectProperties / ObjectTypeID}
+                                    ,{ObjectProperties / ObjectType / EntName}
                                     ,{RouteDate} // Дата  создания
                                     ,{RecordTime}  //  и время создания
 
@@ -47,8 +48,8 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
                                     
                         from "AKUZ.ROUTE_RECORD" 
                         where {AmbulanceEvent / EventID} = @EmergEventID
-                            // and ({ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION"
-                            //     or {ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DIAGNOSTICS")
+                            and ({ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION"
+                                or {ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DIAGNOSTICS")
                             ;
 
 
@@ -76,7 +77,7 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
             begin()
 
                 @Route := new MP.ROUTE();
-                @Route->{Type} := @thisRoute ->{ObjectProperties / ObjectTypeID};
+                @Route->{Type} := @thisRoute ->{ObjectProperties / ObjectType / EntName};
                 @Route->{CreationDateTime} := Str(@thisRoute->{RouteDate},"yyyy-MM-dd") + Str(@thisRoute->{RecordTime},"HH:mm");
 
                 @Route->{Name} := IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name}
