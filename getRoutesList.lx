@@ -1,10 +1,10 @@
 
-begin(patID, RoutesList, Hosp, qrEmergEvent ,status)
+begin(patID, RoutesList, routeRecords, Hosp, EmergEventID ,status)
 
     try 
     begin()
         
-        @patID := @querystring["patId"];
+        @patID := @querystring["patId"]; // 4e6de5f7-4dc9-451b-bf0d-7a64a9b8c279
         @status := 200;
         
 
@@ -15,71 +15,85 @@ begin(patID, RoutesList, Hosp, qrEmergEvent ,status)
         if(@patID<>Null() and @patID<>"") 
         begin()
 
-
-            //------- EMERGENCY_EVENT -------//
-            @qrEmergEvent := query top 1 {AmbulanceCard / CardLpu / Name}
-
-
-
-
+            @EmergEventID := select top 1 {EventID}
                         from "AKUZ.EMERGENCY_EVENT" 
-                        where {AmbulanceCard / Patient / PatientID} = @patID //where {SentSNILS} = @patSNILS
-                        ;
+                        where {AmbulanceCard / Patient / PatientID} = @patID;
+            // @qrEmergEvent := query top 1 {EventID}
+            //             from "AKUZ.EMERGENCY_EVENT" 
+            //             where {AmbulanceCard / Patient / PatientID} = @patID;
+            
+            @routeRecords := query {MedicalRecord}
+                                    ,{ObjectProperties / ObjectTypeID}
+                                    ,{RouteDate} // Дата  создания
+                                    ,{RecordTime}  //  и время создания
+
+                                    ,{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Speciality / Name}
+                                    ,{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Number}
+
+                                    ,{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name}
+                                    ,{As AKUZ.ROUTE_TO_DIAGNOSTICS / NumberDirection}
+                                    // ,{RouteToDiagnosticsAddInfo / As AKUZ.X_RAY_ADD_INFO / XRayAddParamss/ DiagnosticsDictionary / Name}
+                                    // ,{RouteToDiagnosticsAddInfo / As AKUZ.X_RAY_ADD_INFO / XRayAddParamss/ ExaminationArea}
+                                    ,{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / EconomicCode}
+                                    ,{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Code}
+
+                                    ,{EntryAmbulance / Place}
+                                    ,{EntryAmbulance / Resource / DisplayName}
+                                    
+                                    ,{ResultExits} 
+                                    
+                        from "AKUZ.ROUTE_RECORD" 
+                        where {AmbulanceEvent / EventID} = @EmergEventID[0][0];
 
 
             // ============== JSON структура  ==========
             // {
             //     "Routes": [ 
             //         {
-            //             "EventID": "GUID"                         // Идентификатор случая
-            //             "CreationDateTime": "dd-MM-yyyy HH:mm",   // Дата и время регистрации
-            //             "CloseDate": "dd-MM-yyyy",                // Дата закрытия
-            //             "ReceptionDiagnosis" : "string",          // Диагноз при поступлении
-            //             "HospitalizationType": "string",          // Вид госпитализации
+            //             "Type": "string"                         // Тип AKUZ.ROUTE_TO_DOCTOR_INSPECTION - ко вроачу, AKUZ.ROUTE_TO_DIAGNOSTICS - исследование
+            //             "CreationDateTime": "dd-MM-yyyy HH:mm",   // Дата и время создания
+
+            //             "Name" : "string",                     // Наименование услуги / специальности
+            //             "Place": "string",             // Место приёма
             //             "HospitalizationReason": "string",        // Причина госпитализации
-            //             "Division": "string",                     // Отделение
+            //             "ResultExits": "string",                     // Исполнение
             //             "LpuName": "string",                      // Наименование МО
             //         }
             //     ]
             // }
 
-            @RoutesList -> {error} := qrEmergEvent {HospitalDestinationList / HospitalDestinations}
+            @RoutesList -> {error} := @routeRecords ->Count();
 
-            if (@qrEmergEvent->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
-            foreach(thisEmergEvent in @qrEmergEvent)
+            if (@routeRecords->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
+            foreach(thisRoute in @routeRecords)
+            if(@thisRoute ->{ObjectProperties / ObjectTypeID} IN "AKUZ.ROUTE_TO_DOCTOR_INSPECTION")
             begin()
 
-                @Hosp := new MP.HOSP_EVENT();
-                @Hosp->{EventID} := @thisEmergEvent ->{EventID};
-                @Hosp->{CreationDateTime} := Str(@thisEmergEvent->{CreationDateTime},"yyyy-MM-dd HH:mm");
-                @Hosp->{CloseDate} := Str(@thisEmergEvent->{CloseDate},"yyyy-MM-dd");
-                @Hosp->{ReceptionDiagnosis} := @thisEmergEvent -> {ReceptionDiagnosis / Mkb} + " | " +{ReceptionDiagnosis / Diagnosis};
+                @Route := new MP.ROUTE();
+                @Route->{Type} := @thisRoute ->{ObjectProperties / ObjectTypeID};
+                @Route->{CreationDateTime} := Str(@thisRoute->{{RouteDate}},"yyyy-MM-dd") + Str(@thisRoute->{{RecordTime}},"HH:mm");
 
-                @Hosp->{HospitalizationType} := @thisEmergEvent->{MedicalcardRegistration / HospitalizationType / Name};
-                @Hosp->{HospitalizationReason} := @thisEmergEvent->{MedicalcardRegistration / HospitalizationReason / Name};
+                @Route->{Name} := IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name}
+                    , @thisRoute-> {As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Speciality / Name} +" ["@thisRoute->{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Number}+"]"    
+                    , @thisRoute-> {As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name} +" [" + IsNull({As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / EconomicCode}, {As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Code})+"]") 
+                    ;
+
+                @Route->{Place} := "Каб.№" +{EntryAmbulance / Place}+ " "+ {EntryAmbulance / Resource / DisplayName};
+                @Route->{ResultExits} := @thisRoute->{ResultExits};
                 
-                // @MedCertProlongs := @thisEmergEvent ->{MedicalCertificateProlongations};
-                // foreach(thisProlong in @MedCertProlongs)
-                // begin()
-                //     @ELNprlngtion := new MP.MED_CERT_PROLONGATION(); 
-                //     @ELNprlngtion -> {StartDate} := Str(@thisProlong ->{ProlongationStartDate},"yyyy-MM-dd");
-                //     @ELNprlngtion -> {ProlongationDate} := Str(@thisProlong ->{ProlongationDate},"yyyy-MM-dd");
-                //     @ELNprlngtion -> {Post} := @thisProlong ->{Post / DisplayName};
-                //     @Hosp->{Prolongations} -> Add(@ELNprlngtion);
-                // end;
-
-                @Hosp->{Division} := @thisEmergEvent ->{MedicalcardRegistration / Division / Name};
-                @Hosp->{LpuName} := @thisEmergEvent ->{AmbulanceCard / CardLpu / Name};
 
 
-                @RoutesList->{Hospitalizations} -> Add(@Hosp);
+                @Route->{LpuName} := @thisRoute ->{AmbulanceCard / CardLpu / Name};
+
+
+                @RoutesList->{Routes} -> Add(@Route);
                 //@RoutesList->{error} := Str(@ELN,"Json");
 
             end
             else
             begin()
                 @status:=206;
-                @RoutesList->{error} := "Не найдены госпитализации по указанному patId";
+                @RoutesList->{error} := "Не найдены направления по указанному patId";
             end;
 
         end else 
@@ -88,7 +102,7 @@ begin(patID, RoutesList, Hosp, qrEmergEvent ,status)
             @RoutesList->{error} := "Не указан параметр patId";
         end;
 
-        @RoutesList->{error} := @qrEmergEvent->Count();
+        @RoutesList->{error} := @routeRecords->Count();
         
         @response.StatusCode:=@status;
         return(@RoutesList);
