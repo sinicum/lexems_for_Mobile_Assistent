@@ -18,6 +18,7 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
             @EmergEventID := select top 1 {EventID}
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID;
+            @EmergEventID := @EmergEventID[0][0];
             // @qrEmergEvent := query top 1 {EventID}
             //             from "AKUZ.EMERGENCY_EVENT" 
             //             where {AmbulanceCard / Patient / PatientID} = @patID;
@@ -43,13 +44,13 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
                                     ,{ResultExits} 
                                     
                         from "AKUZ.ROUTE_RECORD" 
-                        where {AmbulanceEvent / EventID} = @EmergEventID[0][0]
-                            and ({ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION"
-                                or {ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DIAGNOSTICS"
-                            );
+                        where {AmbulanceEvent / EventID} = @EmergEventID
+                            // and ({ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION"
+                            //     or {ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DIAGNOSTICS")
+                            ;
 
 
-            // ============== JSON структура  ==========
+            // ============== JSON структура  ==============
             // {
             //     "Routes": [ 
             //         {
