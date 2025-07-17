@@ -17,8 +17,9 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
 
             @EmergEventID := select top 1 {EventID}
                         from "AKUZ.EMERGENCY_EVENT" 
-                        where {AmbulanceCard / Patient / PatientID} = @patID;
-            @EmergEventID := @EmergEventID[0][0];
+                        where {AmbulanceCard / Patient / PatientID} = @patID
+                        order by {EventDate} desc;
+            @EmergEventID := @EmergEventID[0][0]; // a268e6d7-618c-4b83-97ca-c9dc8b79b55b
             // @qrEmergEvent := query top 1 {EventID}
             //             from "AKUZ.EMERGENCY_EVENT" 
             //             where {AmbulanceCard / Patient / PatientID} = @patID;
@@ -57,19 +58,18 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
             // {
             //     "Routes": [ 
             //         {
-            //             "Type": "string"                         // Тип AKUZ.ROUTE_TO_DOCTOR_INSPECTION - ко вроачу, AKUZ.ROUTE_TO_DIAGNOSTICS - исследование
-            //             "CreationDateTime": "dd-MM-yyyy HH:mm",   // Дата и время создания
-
-            //             "Name" : "string",                     // Наименование услуги / специальности
-            //             "Place": "string",             // Место приёма
-            //             "HospitalizationReason": "string",        // Причина госпитализации
-            //             "ResultExits": "string",                     // Исполнение
-            //             "LpuName": "string",                      // Наименование МО
+            //             "Type": "string"                         // Тип ROUTE_TO_DOCTOR_INSPECTION - ко вроачу, ROUTE_TO_DIAGNOSTICS - на исследование
+            //             "CreationDateTime": "dd-MM-yyyy HH:mm",  // Дата и время создания
+            //             "Name" : "string",                       // Наименование услуги / специальности
+            //             "Place": "string",                       // Место приёма
+            //             "HospitalizationReason": "string",       // Причина госпитализации
+            //             "ResultExits": "string",                 // Исполнение
+            //             "LpuName": "string",                     // Наименование МО
             //         }
             //     ]
             // }
 
-            @RoutesList -> {error} := @routeRecords ->Count();
+            @RoutesList -> {error} := @EmergEventID;// @routeRecords ->Count();
 
             if (@routeRecords->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
             foreach(thisRoute in @routeRecords)
@@ -78,14 +78,14 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
 
                 @Route := new MP.ROUTE();
                 @Route->{Type} := @thisRoute ->{ObjectProperties / ObjectType / EntName};
-                @Route->{CreationDateTime} := Str(@thisRoute->{RouteDate},"yyyy-MM-dd") + Str(@thisRoute->{RecordTime},"HH:mm");
+                @Route->{CreationDateTime} := Str(@thisRoute->{RouteDate},"yyyy-MM-dd") +" "+ Str(@thisRoute->{RecordTime},"HH:mm");
 
                 @Route->{Name} := IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name}
                     , @thisRoute-> {As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Speciality / Name} +" ["+ Str(@thisRoute->{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Number})+"]"    
                     , @thisRoute-> {As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name} +" [" + IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / EconomicCode}, @thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Code})+"]") 
                     ;
 
-                @Route->{Place} := "Каб.№" +{EntryAmbulance / Place}+ " "+ {EntryAmbulance / Resource / DisplayName};
+                @Route->{Place} := "Каб.№" +@thisRoute->{EntryAmbulance / Place}+ " "+ @thisRoute->{EntryAmbulance / Resource / DisplayName};
                 @Route->{ResultExits} := @thisRoute->{ResultExits};
                 
 
@@ -109,7 +109,7 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
             @RoutesList->{error} := "Не указан параметр patId";
         end;
 
-        @RoutesList->{error} := @routeRecords->Count();
+        //@RoutesList->{error} := @routeRecords->Count();
         
         @response.StatusCode:=@status;
         return(@RoutesList);
