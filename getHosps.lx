@@ -113,7 +113,7 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
     
         @status:=500;
         @response.StatusCode:=@status;
-        @HospList->{error} :=  @ex-> {InnerException};//  Str(@ELN,"Json");
+        @HospList->{error} := @ex-> {InnerException};//  Str(@ELN,"Json");
         return(@HospList);
 
     end;
