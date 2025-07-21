@@ -11,7 +11,8 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
         );
 
     declare MP.COMPLAINT_RESPONSE(
-            complaints:string
+            patID:string
+            ,complaints:string
         );
 
     @obj := {.};
@@ -29,8 +30,8 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
     @address:="https://gist-test-rmis.ezdrav.ru:8899/MP_API/hospComplaint";
 
     ////////////////////////----- сохранение запроса в RABBIT_SEND_OBJECT ----////////////////////////
-    print(@json:=str(@body,"Json"));
-    $throw(@json);
+    @json:=str(@body,"Json");
+    // $throw(@json);
 
     // @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
     // @rso -> {QueueName}:=@address;
@@ -43,8 +44,8 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
     // @rso -> Save();
     ////////////////////////////////////////////////////////
 
-    try
-    begin()
+    // try
+    // begin()
 
         @response := $Send POST Request to @address with headers @headers data @body {oid_mo}
             ,{patID}
@@ -59,17 +60,19 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
         @json2 := str(@result["Body"],"Json"); // весь ответ в строке в json
 
         
-        @obj := {IncomingComplaints} := 
-        print(@result["Body"] -> {Complaints});
+        // @obj := {IncomingComplaints} := 
+        $throw(@json2);
+        // @result["Body"] -> {Complaints});
         
 
-    end
-    catch(ex)
-    begin()
-        @json2 := @ex -> {Message};
-        @err :=  @ex -> {Message};
-        return(@err);
-    end;
+    // end
+    // catch(ex)
+    // begin()
+    //     @json2 := @ex -> {InnerException};
+    //     @err :=  @ex -> {InnerException};
+    //     return(@err);
+    //     $throw(@json2);
+    // end;
 
     // @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
     // @rso -> {QueueName}:=@address;
