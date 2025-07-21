@@ -47,11 +47,11 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
     // try
     // begin()
 
-        @response := $Send POST Request to @address with headers @headers data @body {oid_mo}
-            ,{patID}
-            ,{eventID}
-            ,{dateTime}
-            ,{MO_id};
+        @response := $Send GET Request to @address with headers @headers ;
+        // data @body {patID}
+        //     ,{eventID}
+        //     ,{dateTime}
+        //     ,{MO_id};
 
         @result:=$Expect unsafe "MP.COMPLAINT_RESPONSE" From @response inbody as json;
         //////////////////////////////////////////////////////////////////////////
