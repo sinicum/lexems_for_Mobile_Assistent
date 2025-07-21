@@ -1,4 +1,7 @@
 begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,err,data)
+{{AmbulanceCard / Patient / PatientID}
+,{EventID}
+,{AmbulanceCard / CardLpu / LpuID}}
 
     declare MP.POST_EVENTID(
             patID:string
@@ -27,6 +30,7 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
 
     ////////////////////////----- сохранение запроса в RABBIT_SEND_OBJECT ----////////////////////////
     print(@json:=str(@body,"Json"));
+    $throw(@json);
 
     // @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
     // @rso -> {QueueName}:=@address;
