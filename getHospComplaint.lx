@@ -1,0 +1,81 @@
+begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,err,data)
+
+    declare MP.POST_EVENTID(
+            patID:string
+            ,eventID:string
+            ,dateTime:dateTime
+            ,MO_id:string
+        );
+
+    declare MP.COMPLAINT_RESPONSE(
+            complaints:string
+        );
+
+    @obj := {.};
+    
+    @body := new MP.POST_EVENTID();
+    @body -> {patID} := @obj->{AmbulanceCard / Patient / PatientID};    
+    @body -> {EventID}:= @obj->{EventID};
+    @body -> {DateTime} := @Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm");
+    @body -> {MO_id} := @obj->{AmbulanceCard / CardLpu / LpuID} ;
+
+    // @headers:= new Hashtable();
+    // @headers["Authorization"]:="Basic YXBpX3JlcXVlc3Q6Q3RkZmNuamdqa20="; 
+
+    // @address:="https://medapi.miwory.ru/v1/vitacore/hospComplaint"; 
+    @address:="https://gist-test-rmis.ezdrav.ru:8899/MP_API/hospComplaint";
+
+    ////////////////////////----- сохранение запроса в RABBIT_SEND_OBJECT ----////////////////////////
+    print(@json:=str(@body,"Json"));
+
+    // @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
+    // @rso -> {QueueName}:=@address;
+    // @rso -> {Content}:=@json;
+    // @rso -> {RoutingKey}:="";
+    // @rso -> {Type}:="TEST_COMPLAINT_REQUEST";
+    // @rso -> {State}:=1;
+    // @rso -> {ContentEncoding}:="utf-8";
+    // @rso -> {CreateDateTime}:= param(CURRENT_DATE_TIME);
+    // @rso -> Save();
+    ////////////////////////////////////////////////////////
+
+    try
+    begin()
+
+        @response := $Send POST Request to @address with headers @headers data @body {oid_mo}
+            ,{patID}
+            ,{eventID}
+            ,{dateTime}
+            ,{MO_id};
+
+        @result:=$Expect unsafe "MP.COMPLAINT_RESPONSE" From @response inbody as json;
+        //////////////////////////////////////////////////////////////////////////
+
+        @statusCode:= @result["Response"]->{StatusCode}; // 200 - Работает
+        @json2 := str(@result["Body"],"Json"); // весь ответ в строке в json
+
+        
+        @obj := {IncomingComplaints} := 
+        print(@result["Body"] -> {Complaints});
+        
+
+    end
+    catch(ex)
+    begin()
+        @json2 := @ex -> {Message};
+        @err :=  @ex -> {Message};
+        return(@err);
+    end;
+
+    // @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
+    // @rso -> {QueueName}:=@address;
+    // @rso -> {Content}:=@json2;
+    // @rso -> {RoutingKey}:="";
+    // @rso -> {Type}:="AIST_EVENTS_GET_RESPONSE";
+    // @rso -> {State}:=1;
+    // @rso -> {ContentEncoding}:="utf-8";
+    // @rso -> {CreateDateTime}:= param(CURRENT_DATE_TIME);
+    // @rso -> Save();
+    ////////////////////////////////////////////////////////
+
+end;
