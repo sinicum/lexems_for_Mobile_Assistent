@@ -19,7 +19,7 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
     @body := new MP.POST_EVENTID();
     @body -> {patID} := @obj->{AmbulanceCard / Patient / PatientID};    
     @body -> {eventID}:= @obj->{EventID};
-    @body -> {dateTime} := @Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm");
+    @body -> {dateTime} := Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm");
     @body -> {MO_id} := @obj->{AmbulanceCard / CardLpu / LpuID} ;
 
     // @headers:= new Hashtable();
