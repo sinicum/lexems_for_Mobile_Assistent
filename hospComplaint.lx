@@ -23,7 +23,7 @@ begin(pat_id, event_id, date_time, MO_id, complaints, resp ,status, err)
     catch(ex)
     begin()
         @resp := new MP.GIVE_COMPLAINT_OUT();
-        @Status := 500;
+        @status := 500;
    
         if (str(IsNull(@ex -> {InnerException},""))<>"")
             @err:=SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}),char(13)+char(10)))
