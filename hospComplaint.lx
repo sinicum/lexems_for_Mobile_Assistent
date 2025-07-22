@@ -1,12 +1,12 @@
 begin(pat_id, event_id, date_time, MO_id, complaints, resp ,status, err)
 
-    // try
-    // begin()
+    try
+    begin()
 
         // сажаю прилетевшие поля
         @pat_id := Cast(@Body -> {patID},"Guid");
         @event_id := Cast(@Body -> {eventID},"Guid");
-        @date_time := Cast(@Body -> {eventID},"DateTime");
+        @date_time := Cast(@Body -> {dateTime},"DateTime");
         @MO_id := Cast(@Body -> {MO_id},"Guid");
 
         // заполняю поля на отдачу
@@ -14,27 +14,27 @@ begin(pat_id, event_id, date_time, MO_id, complaints, resp ,status, err)
         
         @resp := new MP.GIVE_COMPLAINT_OUT();  
         @resp -> {patID} := @pat_id;
-        @resp -> @complaints +" | "+ Str(@event_id) +" | "+ Str(@date_time) +" | "+ Str(@MO_id);
+        @resp -> {complaints} := @complaints +" | "+ Str(@event_id) +" | "+ Str(@date_time) +" | "+ Str(@MO_id);
 
-        @response.StatusCode := @status;
+        @response.StatusCode := 200;
         return(@resp);
 
-    // end
-    // catch(ex)
-    // begin()
-    //     @resp := new MP.GIVE_COMPLAINT_OUT();
-    //     @status := 206;
+    end
+    catch(ex)
+    begin()
+        @resp := new MP.GIVE_COMPLAINT_OUT();
+        @status := 206;
    
-    //     @err := @ex -> {InnerException};
-    //     // if (str(IsNull(@ex -> {InnerException},""))<>"")
-    //     //     @err:=SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}),char(13)+char(10)))
-    //     // else
-    //     //     @err:="Прочая ошибка";
+        //@err := @ex -> {InnerException};
+        if (str(IsNull(@ex -> {InnerException},""))<>"")
+            @err:=SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}),char(13)+char(10)))
+        else
+            @err:="Прочая ошибка";
  
-    //     @resp -> {error} := @err;
+        @resp -> {error} := @err;
         
-    //     @response.StatusCode := @status;
-    //     return(@resp);
+        @response.StatusCode := @status;
+        return(@resp);
         
-    // end;    
+    end;    
 end
