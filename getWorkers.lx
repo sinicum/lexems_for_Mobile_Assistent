@@ -1,4 +1,4 @@
-// ТИС. Отдаю врачей по по ID МО или Филиала
+// МП. Отдаю врачей по по ID МО или Филиала
 begin(isLpu,qrWrks,moWrkPosts,lpu,ms,arr,str,err) 
 
 ////////////////// ПРИМЕР ОТВЕТА
@@ -115,13 +115,13 @@ begin()
         @str := @str + Str(@arr, "ByteToUTF8") + ",";
         end
         else begin()
-        @err := new COMMON.ERROR();
+        @err := new MP.ERROR();
             @err-> {code} := "02";
             @err-> {message} := "В базе отсутствует подразделение (МО или филиал) с указанным идентификатором, либо оно не активно";
         end;
     end
     else begin() //-- КРИВОЙ ПАРАМЕТР
-        @err := new COMMON.ERROR();
+        @err := new MP.ERROR();
         @err-> {code} := "01";
         @err-> {message} := "Параметр departmentId имеет неверный формат";
     end;
@@ -132,14 +132,27 @@ begin()
 end
 catch(ex)
 begin()
-    @err := new COMMON.ERROR();
+    @err := new MP.ERROR();
     @err -> {code} := "99";
-    @ex := IsNull(@ex->{InnerException}->{InnerException}->{InnerException}->{InnerException},
-            IsNull(@ex->{InnerException}->{InnerException}->{InnerException},
-            IsNull(@ex->{InnerException}->{InnerException},
-            IsNull(@ex->{InnerException},@ex))));
-    @err-> {message} := @ex->{Message};
-    return(@err);
+    // @ex := IsNull(@ex->{InnerException}->{InnerException}->{InnerException}->{InnerException},
+    //         IsNull(@ex->{InnerException}->{InnerException}->{InnerException},
+    //         IsNull(@ex->{InnerException}->{InnerException},
+    //         IsNull(@ex->{InnerException},@ex))));
+            
+    // @err-> {message} := @ex->{Message};
+
+        if (str(IsNull(@ex -> {InnerException},""))<>"")
+            @err-> {message}:=SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}),char(13)+char(10)))
+        else
+            @err-> {message}:="Прочая ошибка";
+
+        
+        @response.StatusCode := 500;
+
+        return(@err);
+
+
+
 end;
 
 end
