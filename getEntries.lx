@@ -1,35 +1,28 @@
 // Метод /getHosps -- Список предыдущих госпитализаций
-begin(patID, HospList, Hosp, qrEmergEvent ,status)
+begin(patID, EntrsList, Entry, qrEntries ,status)
 
     try 
     begin()
         
-        @patID := @querystring["patId"];
+        @patID := @querystring["patId"]; //7d29e475-1cab-4ab3-b1e8-bbdc5dad27ae // Тестовый Алексей Данисович
         @status := 200;
 
-        @HospList := new MP.ENTRIES_LIST();
+        @EntrsList := new MP.ENTRIES_LIST();
 
         if(@patID<>Null() and @patID<>"") 
         begin()
 
-
-            //------- EMERGENCY_EVENT -------//
-            @qrEmergEvent := query {EventID}
-                                ,{CreationDateTime}
-                                ,{CloseDate}
-                                ,{ReceptionDiagnosis / Mkb}
-                                ,{ReceptionDiagnosis / Diagnosis}
-                                //,{MedicalcardRegistration / Diagnosis}
-
-                                ,{MedicalcardRegistration / HospitalizationType / Name}
-                                ,{MedicalcardRegistration / HospitalizationReason / Name}
-                                ,{MedicalcardRegistration / Division / Name}
-                                ,{AmbulanceCard / CardLpu / Name}
-
-                                ,{HospitalDestinationList / HospitalDestinations}
-
-                        from "AKUZ.EMERGENCY_EVENT" 
-                        where {AmbulanceCard / Patient / PatientID} = @patID //where {SentSNILS} = @patSNILS
+            //------- ENTRY_AMBULANCE -------//
+            @qrEntries := query {Ticket / TicketTime}
+                                    ,{Ticket / TicketType}
+                                    ,{EntryPlace}   
+                                    ,{ObjectProperties / ObjectType / EntDesc}
+                                    ,{Resource / As AKUZ.POST / Worker}
+                                    ,{Resource / Speciality}
+                                    ,{Resource / Division / Branch / Name}
+                                    ,{Resource / Division / Branch / LpuMain / Name} 
+                        from "AKUZ.ENTRY_AMBULANCE" 
+                        where {AmbulanceEvent / AmbulanceCard / Patient / PatientID} = @patID //where {SentSNILS} = @patSNILS
                         ;
 
 
@@ -37,67 +30,54 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
             // {
             //     "Entries": [ 
             //         {
-            //             "EventID": "GUID"                         // Идентификатор случая
-            //             "CreationDateTime": "dd-MM-yyyy HH:mm",   // Дата и время регистрации
-            //             "CloseDate": "dd-MM-yyyy",                // Дата закрытия
-            //             "ReceptionDiagnosis" : "string",          // Диагноз при поступлении
-            //             "HospitalizationType": "string",          // Вид госпитализации
-            //             "HospitalizationReason": "string",        // Причина госпитализации
-            //             "Division": "string",                     // Отделение
-            //             "LpuName": "string",                      // Наименование МО
+            //             "DateTime": "dd-MM-yyyy HH:mm",              // Дата и время записи
+            //             "TicketType": "string",                      // Тип талона
+            //             "EntryPlace": "string",                      // Место записи
+            //             "EntryType": "string",                       // Тип записи
+            //             "Resource" : "Фамилия И.О. (специальность)", // Врач
+            //             "Branch": "string",                          // Подразделение
+            //             "LpuName": "string",                         // Наименование МО
             //         }
             //     ]
             // }
 
-            @HospList -> {error} := qrEmergEvent {HospitalDestinationList / HospitalDestinations}
+            //@EntrsList -> {error} := "";
 
-            if (@qrEmergEvent->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
-            foreach(thisEmergEvent in @qrEmergEvent)
+            if (@qrEntries->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
+            foreach(thisEntry in @qrEntries)
             begin()
 
-                @Hosp := new MP.HOSP_EVENT();
-                @Hosp->{EventID} := @thisEmergEvent ->{EventID};
-                @Hosp->{CreationDateTime} := Str(@thisEmergEvent->{CreationDateTime},"yyyy-MM-dd HH:mm");
-                if(@thisEmergEvent->{CloseDate}<>Nill()) @Hosp->{CloseDate} := Str(@thisEmergEvent->{CloseDate},"yyyy-MM-dd");
-                @Hosp->{ReceptionDiagnosis} := @thisEmergEvent -> {ReceptionDiagnosis / Mkb} +" | "+ @thisEmergEvent -> {ReceptionDiagnosis / Diagnosis};
+                @Entry := new MP.ENTRY();
 
-                @Hosp->{HospitalizationType} := @thisEmergEvent->{MedicalcardRegistration / HospitalizationType / Name};
-                @Hosp->{HospitalizationReason} := @thisEmergEvent->{MedicalcardRegistration / HospitalizationReason / Name};
-                
-                // @MedCertProlongs := @thisEmergEvent ->{MedicalCertificateProlongations};
-                // foreach(thisProlong in @MedCertProlongs)
-                // begin()
-                //     @ELNprlngtion := new MP.MED_CERT_PROLONGATION(); 
-                //     @ELNprlngtion -> {StartDate} := Str(@thisProlong ->{ProlongationStartDate},"yyyy-MM-dd");
-                //     @ELNprlngtion -> {ProlongationDate} := Str(@thisProlong ->{ProlongationDate},"yyyy-MM-dd");
-                //     @ELNprlngtion -> {Post} := @thisProlong ->{Post / DisplayName};
-                //     @Hosp->{Prolongations} -> Add(@ELNprlngtion);
-                // end;
-
-                @Hosp->{Division} := @thisEmergEvent ->{MedicalcardRegistration / Division / Name};
-                @Hosp->{LpuName} := @thisEmergEvent ->{AmbulanceCard / CardLpu / Name};
+                @Entry->{DateTime} := Str(@thisEntry->{Ticket / TicketTime},"yyyy-MM-dd HH:mm");
+                @Entry->{TicketType} := Str(@thisEntry -> {Ticket / TicketType});
+                @Entry->{EntryPlace} := @thisEntry->{EntryPlace};
+                @Entry->{EntryType} := @thisEntry->{ObjectProperties / ObjectType / EntDesc};
+                @Entry->{Resource} := @thisEntry->{Resource / DisplayName};
+                @Entry->{Branch} := @thisEntry ->{Resource / Division / Branch / Name};
+                @Entry->{LpuName} := @thisEntry ->{Resource / Division / Branch / LpuMain / Name} ;
 
 
-                @HospList->{Entries} -> Add(@Hosp);
-                //@HospList->{error} := Str(@ELN,"Json");
+                @EntrsList->{Entries} -> Add(@Entry);
+                //@EntrsList->{error} := Str(@Entry,"Json");
 
             end
             else
             begin()
                 @status:=206;
-                @HospList->{error} := "Не найдены записи по указанному patId";
+                @EntrsList->{error} := "Не найдены записи по указанному patId";
             end;
 
         end else 
         begin()
             @status:=206;
-            @HospList->{error} := "Не указан параметр patId";
+            @EntrsList->{error} := "Не указан параметр patId";
         end;
 
-        @HospList->{error} := @qrEmergEvent->Count();
+        // @EntrsList->{error} := @qrEntries->Count();
         
         @response.StatusCode:=@status;
-        return(@HospList);
+        return(@EntrsList);
     end
     catch(ex)
     begin()
@@ -109,8 +89,8 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
     
         @status:=500;
         @response.StatusCode:=@status;
-        @HospList->{error} := @ex-> {InnerException};//  Str(@ELN,"Json");
-        return(@HospList);
+        @EntrsList->{error} := @ex-> {InnerException};
+        return(@EntrsList);
 
     end;
 end
