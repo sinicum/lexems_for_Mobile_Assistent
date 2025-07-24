@@ -51,7 +51,7 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
 
                 @Entry->{DateTime} := Str(@thisEntry->{Ticket / TicketTime},"yyyy-MM-dd HH:mm");
                 @Entry->{TicketType} := Str(@thisEntry -> {Ticket / TicketType});
-                @Entry->{EntryPlace} := @thisEntry->{EntryPlace};
+                @Entry->{EntryPlace} := Str(@thisEntry->{EntryPlace});
                 @Entry->{EntryType} := @thisEntry->{ObjectProperties / ObjectType / EntDesc};
                 @Entry->{Resource} := @thisEntry->{Resource / DisplayName};
                 @Entry->{Branch} := @thisEntry ->{Resource / Division / Branch / Name};
