@@ -17,8 +17,8 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
                                     ,{Ticket / TicketType}
                                     ,{EntryPlace}   
                                     ,{ObjectProperties / ObjectType / EntDesc}
-                                    ,{Resource / As AKUZ.POST / Worker}
-                                    ,{Resource / Speciality}
+                                    ,{Resource / As AKUZ.POST / Worker / FIO}
+                                    ,{Resource / Speciality / Name}
                                     ,{Resource / Division / Branch / Name}
                                     ,{Resource / Division / Branch / LpuMain / Name} 
                         from "AKUZ.ENTRY_AMBULANCE" 
@@ -53,7 +53,7 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
                 @Entry->{TicketType} := Str(@thisEntry -> {Ticket / TicketType});
                 @Entry->{EntryPlace} := Str(@thisEntry->{EntryPlace});
                 @Entry->{EntryType} := @thisEntry->{ObjectProperties / ObjectType / EntDesc};
-                @Entry->{Resource} := @thisEntry->{Resource / DisplayName};
+                @Entry->{Resource} := @thisEntry->{Resource / As AKUZ.POST / DisplayName};
                 @Entry->{Branch} := @thisEntry ->{Resource / Division / Branch / Name};
                 @Entry->{LpuName} := @thisEntry ->{Resource / Division / Branch / LpuMain / Name} ;
 
