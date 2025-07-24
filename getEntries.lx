@@ -59,7 +59,7 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
 
 
                 @EntrsList->{Entries} -> Add(@Entry);
-                @EntrsList->{error} := Str(@Entry,"Json");
+                //@EntrsList->{error} := Str(@Entry,"Json");
 
             end
             else
