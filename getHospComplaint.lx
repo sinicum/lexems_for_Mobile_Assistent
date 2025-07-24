@@ -6,11 +6,9 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
     declare MP.POST_EVENTID(
             patID:string
             ,eventID:string
-            ,dateTime:string
+            ,dateTime:DateTime
             ,MO_id:string
         );
-
-
 
     declare MP.COMPLAINT_RESPONSE(
             patID:string
@@ -23,7 +21,7 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
     @body := new MP.POST_EVENTID();
     @body -> {patID} := @obj->{AmbulanceCard / Patient / PatientID};    
     @body -> {eventID}:= @obj->{EventID};
-    @body -> {dateTime} := Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm");
+    @body -> {dateTime} := Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm:ss");
     @body -> {MO_id} := @obj->{AmbulanceCard / CardLpu / LpuID} ;
 
     @headers:= new Hashtable();
