@@ -22,18 +22,17 @@ begin(pat_id, event_id, date_time, MO_id, complaints, resp ,status, err)
     end
     catch(ex)
     begin()
-        @resp := new MP.GIVE_COMPLAINT_OUT();
-        @status := 206;
-   
+        
         //@err := @ex -> {InnerException};
         if (str(IsNull(@ex -> {InnerException},""))<>"")
-            @err:=SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}),char(13)+char(10)))
+            @err := SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}), char(13)+char(10)))
         else
-            @err:="Прочая ошибка";
+            @err := "Прочая ошибка";
  
+        @resp := new MP.GIVE_COMPLAINT_OUT();
         @resp -> {error} := @err;
         
-        @response.StatusCode := @status;
+        @response.StatusCode := 500;
         return(@resp);
         
     end;    
