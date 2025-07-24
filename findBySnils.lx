@@ -1,0 +1,135 @@
+//  /findBySnils. Поиск по СНИЛС. Модификация (упрощение) метода /find_pat 
+begin(snils, qrPats,patMain,dt,dtEhr,err,ex,l)
+
+    try 
+    begin()
+
+        @snils := if(@querystring["snils"]="") Null() else @querystring["snils"];
+
+        @patMain := new MP.PATIENTS_LIST();
+
+        if (@snils <>Null()) ////------------- ЕСЛИ УКАЗАН ПАРАМЕТР "snils" --------------
+        begin()
+            if (RegularExpression("^[0-9]{3}-[0-9]{3}-[0-9]{3} [0-9]{2}$", @snils) > 0 and @snils<>"000-000-000 00") 
+            begin()
+                //$throw("норм СНИЛС");//-- норм СНИЛС
+                @qrPats := query top 10 {PatientID},{SNILS / Snils},{LastName},{FirstName},{FatherName},{Sex / ShortName},{Birthday} 
+                    ,{DocType / ShortName},{DocSeries},{DocNumber},{DocIssueDate}
+                    ,{PolicyOmsNumber},{AddressReal / DisplayName},{AddressReal / FreeAddressString}
+                    ,{PhoneNumbersString}
+                from "AKUZ.PATIENT" where {SNILS / Snils} = @snils ;
+
+                if (@qrPats->Count()=0)
+                begin()
+                    @err := new MP.ERROR();
+                    @err -> {code} := "02";
+                    @err-> {message} := "Поиск по СНИЛС: пациент не найден";
+                    @patMain->{error} := @err;
+                end;
+            end
+            else begin() //-- КРИВОЙ СНИЛС
+                @err := new MP.ERROR();
+                @err -> {code} := "01";
+                @err-> {message} := "Параметр СНИЛС имеет неверный формат";
+                @patMain->{error} := @err;
+            end;
+        end;
+
+
+        // ============== КРАТКИЙ ФОРМАТ  ==========
+        // {
+        //     "patients": [
+        //         {
+        //             "id": "c8df3915-fe16-486a-9dab-9cfa2722da8d",
+        //             "SNILS":"",
+        //             "lastName": "Тестовая",
+        //             "firstName": "Теста",
+        //             "middleName": "Тестовна",
+        //             "birthDate": "1975-01-01",
+        //             "gender": "Ж",
+        //                  ---"docType": "",
+        //             "docSer": "",
+        //             "docNum": "",
+        //                  --"docDate": "",
+        //                  --"docOrg": "",
+        //                  --"polisType": "",
+        //             "polSer": "" ,
+        //             "polNum": "" ,
+        //                  --"insCode":"",
+        //                  --"insName": "",
+        //             "contacts": "",
+        //             "address1":"",
+        //                  --"address2":""
+        //         }
+        //     ]
+        // }
+
+
+        if (@qrPats->Count()>0 and @err=Null())  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
+        foreach(thisPatnt in @qrPats) begin(patient)
+            @patient := new MP.PATIENT();
+            @patient->{id} := @thisPatnt-> {PatientID};
+            if(@thisPatnt->{SNILS / Snils} <> "" and @thisPatnt->{SNILS / Snils}<>"              ") @patient->{SNILS} := @thisPatnt-> {SNILS / Snils};
+            @patient->{lastName} := @thisPatnt->{LastName};
+            @patient->{firstName} := @thisPatnt->{FirstName};
+            if(@thisPatnt->{FatherName} <> Null()) @patient->{middleName} := @thisPatnt->{FatherName};
+            @patient->{gender} := @thisPatnt->{Sex / ShortName};
+            @patient->{birthDate} := Str(@thisPatnt->{Birthday},"yyyy-MM-dd"); 
+            
+            if (@thisPatnt -> {DocType / ShortName} <> "БЕЗ ДОКУМЕНТА") @patient->{docType} := @thisPatnt -> {DocType / ShortName}; 
+            //     @dt := @thisPatnt->{DocType / EnumID}; 
+            //     @dtEhr := (query top 1 {EhrRusNn5meatu5t / IdEHR} from "EHR.EHR_TYPE_MATCHING_DUL" where {DocType / EnumID} = @dt);
+            //     //-- 1.2.643.5.1.13.13.99.2.48 v6.2 // NN5MEATU5T //Документы, удостоверяющие личность;
+            // if (@dt <> 10599 and @dtEhr->Count()>0) @patient->{docType} := @dtEhr[0]->{EhrRusNn5meatu5t / IdEHR};
+            if(@thisPatnt->{DocSeries}<>Null()) @patient->{docSer} := @thisPatnt->{DocSeries};
+            if(@thisPatnt->{DocNumber}<>Null()) @patient->{docNum} := @thisPatnt->{DocNumber};
+            //if(@thisPatnt->{DocIssueDate}<>Null()) @patient->{docDate} := @thisPatnt->{DocIssueDate};
+            //if(@thisPatnt->{DocIssueOrg}<>Null()) @patient->{docOrg} := @thisPatnt->{DocIssueOrg};
+
+            if(@thisPatnt->{PolicyOmsNumber} <> Null()) @patient->{polNum} := @thisPatnt->{PolicyOmsNumber};
+            //if(@thisPatnt->{OmsPolicy / Serial}<>Null()) @patient->{polSer} := @thisPatnt->{OmsPolicy / Serial};
+            //if(@thisPatnt->{OmsPolicy / Number}<>Null()) @patient->{polNum} := @thisPatnt->{OmsPolicy / Number};
+            //if(@thisPatnt->{OmsPolicy / Number}<>Null()) @patient->{polisOms} := IsNull(@thisPatnt->{OmsPolicy / Serial},"",@thisPatnt->{OmsPolicy / Serial}+"|") + @thisPatnt->{OmsPolicy / Number};
+            //if(@thisPatnt->{OmsPolicy / PolicyForm}<>Null()) @patient->{polisType} := @thisPatnt->{OmsPolicy / PolicyForm};
+            
+            //if(@thisPatnt->{OmsPolicy / InsuranceCompany} <>Null()) @patient->{insCode} := (if (@thisPatnt->{OmsPolicy / InsuranceCompany / Code} = "99") @thisPatnt->{OmsPolicy / Insurer / SmoCod} else @thisPatnt->{OmsPolicy / InsuranceCompany / Insurer / SmoCod});
+            //if(@thisPatnt->{OmsPolicy / InsuranceCompany} <>Null()) @patient->{insName} := (if (@thisPatnt->{OmsPolicy / InsuranceCompany / Code} = "99") @thisPatnt->{OmsPolicy / Insurer / ShortName} else @thisPatnt->{OmsPolicy / InsuranceCompany / Insurer / ShortName});
+
+            // contacts
+            //if(@thisPatnt->{PhoneNumbersString} <>Null()) @patient->{phones} := @thisPatnt->{PhoneNumbersString};
+            // address1 - Проживание
+            @patient->{address1} := if (@thisPatnt->{AddressReal / FreeAddressString} <> "") @thisPatnt->{AddressReal / FreeAddressString} else  @thisPatnt->{AddressReal/DisplayName};
+            //@patient->{address2} := if (@thisPatnt->{AddressLegal / FreeAddressString} <> "") @thisPatnt->{AddressLegal / FreeAddressString} else  @thisPatnt->{AddressLegal/DisplayName}; 
+
+            @patMain->{patients} -> Add(@patient);
+        end;
+
+        //if (@err <> Null()) return(@err) else return(@patMain);
+        return(@patMain);
+
+    end
+    catch(ex)
+    begin()
+        @err := new MP.ERROR();
+
+        @l :=0;
+        while (IsNull(@ex-> {InnerException}, false, true) )
+        begin()
+            @l :=@l+1;
+            @ex := @ex -> {InnerException};
+        end;
+        //-- Бэкап строки с InnerException
+        //@ex := IsNull(@ex->{InnerException}->{InnerException}->{InnerException}->{InnerException},
+        //        IsNull(@ex->{InnerException}->{InnerException}->{InnerException},
+        //        IsNull(@ex->{InnerException}->{InnerException},
+        //        IsNull(@ex->{InnerException},@ex))));
+
+        @err -> {code} := "9" + Str(@l);
+        @err-> {message} := @ex->{Message};
+        @patMain->{error} := @err;
+
+        @response.StatusCode := 500;
+        return(@patMain);
+
+    end;
+end
