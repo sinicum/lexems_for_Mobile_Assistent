@@ -6,11 +6,8 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
         
         @patID := @querystring["patId"];
         @status := 200;
-        
-
         //$throw(@patSNILS[0][0]);
         @HospList := new MP.HOSPS_LIST();
-
 
         if(@patID<>Null() and @patID<>"") 
         begin()
@@ -28,7 +25,6 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
                                 ,{MedicalcardRegistration / HospitalizationReason / Name}
                                 ,{MedicalcardRegistration / Division / Name}
                                 ,{AmbulanceCard / CardLpu / Name}
-
 
                                 ,{HospitalDestinationList / HospitalDestinations}
 
@@ -62,8 +58,8 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
                 @Hosp := new MP.HOSP_EVENT();
                 @Hosp->{EventID} := @thisEmergEvent ->{EventID};
                 @Hosp->{CreationDateTime} := Str(@thisEmergEvent->{CreationDateTime},"yyyy-MM-dd HH:mm");
-                @Hosp->{CloseDate} := Str(@thisEmergEvent->{CloseDate},"yyyy-MM-dd");
-                @Hosp->{ReceptionDiagnosis} := @thisEmergEvent -> {ReceptionDiagnosis / Mkb} + " | " +{ReceptionDiagnosis / Diagnosis};
+                if(@thisEmergEvent->{CloseDate}<>Nill()) @Hosp->{CloseDate} := Str(@thisEmergEvent->{CloseDate},"yyyy-MM-dd");
+                @Hosp->{ReceptionDiagnosis} := @thisEmergEvent -> {ReceptionDiagnosis / Mkb} +" | "+ @thisEmergEvent -> {ReceptionDiagnosis / Diagnosis};
 
                 @Hosp->{HospitalizationType} := @thisEmergEvent->{MedicalcardRegistration / HospitalizationType / Name};
                 @Hosp->{HospitalizationReason} := @thisEmergEvent->{MedicalcardRegistration / HospitalizationReason / Name};
