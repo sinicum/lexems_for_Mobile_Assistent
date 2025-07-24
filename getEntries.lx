@@ -43,7 +43,7 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
 
             //@EntrsList -> {error} := "";
 
-            if (@qrEntries->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
+            if (@qrEntries->Count()>0 )  //----- НАЙДЕНЫ ЛИ ЗАПИСИ ------//
             foreach(thisEntry in @qrEntries)
             begin()
 
@@ -59,7 +59,7 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
 
 
                 @EntrsList->{Entries} -> Add(@Entry);
-                //@EntrsList->{error} := Str(@Entry,"Json");
+                @EntrsList->{error} := Str(@Entry,"Json");
 
             end
             else
