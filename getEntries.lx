@@ -1,4 +1,4 @@
-// Метод /getHosps -- Список предыдущих госпитализаций
+// Метод /getEntries -- Список предстоящих Записей на приём по пациенту
 begin(patID, EntrsList, Entry, qrEntries ,status)
 
     try 
@@ -23,6 +23,7 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
                                     ,{Resource / Division / Branch / LpuMain / Name} 
                         from "AKUZ.ENTRY_AMBULANCE" 
                         where {AmbulanceEvent / AmbulanceCard / Patient / PatientID} = @patID //where {SentSNILS} = @patSNILS
+                            and {EntryDate} >= param(CURRENT_DATE)
                         ;
 
 
