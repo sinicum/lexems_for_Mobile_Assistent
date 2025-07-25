@@ -1,5 +1,5 @@
 // МП. Отдаю врачей по по ID МО или Филиала
-begin(qrWrks, moWrkPosts, lpu, isLpu, str, err) 
+begin(WrkrsList, qrWrks, moWrkPosts, lpu, isLpu, status, err) 
 
     //============== JSON СТРУКТУРА ОТВЕТА ==============
     // {
@@ -137,6 +137,8 @@ begin(qrWrks, moWrkPosts, lpu, isLpu, str, err)
         // @str := Substring(@str,0,StringLen(@str)-if(@qrWrks->count()=0) 0 else 1) + "]"; // дописал для count()=0
         // if (@err <> Null()) return(@err) else return(@str);
         @WrkrsList->{error} := @err;
+        @response.StatusCode := 500;
+        return(@WrkrsList);
 
     end
     catch(ex)
@@ -148,19 +150,17 @@ begin(qrWrks, moWrkPosts, lpu, isLpu, str, err)
         //         IsNull(@ex->{InnerException}->{InnerException},
         //         IsNull(@ex->{InnerException},@ex))));
                 
-        // @err-> {message} := @ex->{Message};
+        @err-> {message} := @ex->{InnerException};
 
-        if (str(IsNull(@ex -> {InnerException},""))<>"")
-            @err-> {message}:=SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}),char(13)+char(10)))
-        else
-            @err-> {message}:="Прочая ошибка";
+        // if (str(IsNull(@ex -> {InnerException},""))<>"")
+        //     @err-> {message}:=SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}),char(13)+char(10)))
+        // else
+        //     @err-> {message}:="Прочая ошибка";
 
         @WrkrsList->{error} := @err;
         @response.StatusCode := 500;
         return(@WrkrsList);
 
-
-
-end;
+    end;
 
 end
