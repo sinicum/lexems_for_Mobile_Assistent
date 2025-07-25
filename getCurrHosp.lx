@@ -58,7 +58,7 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
                 @Hosp := new MP.HOSP_EVENT();
                 @Hosp->{EventID} := @thisEmergEvent ->{EventID};
                 @Hosp->{CreationDateTime} := Str(@thisEmergEvent->{CreationDateTime},"yyyy-MM-dd HH:mm");
-                if(@thisEmergEvent->{CloseDate}<>Nill()) @Hosp->{CloseDate} := Str(@thisEmergEvent->{CloseDate},"yyyy-MM-dd");
+                if(@thisEmergEvent->{CloseDate}<>Null()) @Hosp->{CloseDate} := Str(@thisEmergEvent->{CloseDate},"yyyy-MM-dd");
                 @Hosp->{ReceptionDiagnosis} := @thisEmergEvent -> {ReceptionDiagnosis / Mkb} +" | "+ @thisEmergEvent -> {ReceptionDiagnosis / Diagnosis};
 
                 @Hosp->{HospitalizationType} := @thisEmergEvent->{MedicalcardRegistration / HospitalizationType / Name};
