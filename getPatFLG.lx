@@ -1,15 +1,14 @@
-//  /getPatFLG. Фрюорография пациента
+//  /getPatFLG. Флюорография пациента
 begin(patID, qrPats, patFLG, status)
 
         // ============== JSON структура  ==========
         // {
-        //     "id": "c8df3915-fe16-486a-9dab-9cfa2722da8d",
-        //     "SNILS":"",
-        //     "LastFgDate": "string",
-        //     "NextPrgDate": "string",
-        //     "PrgContingent": 
+        //     "id": "0bf2e271-e565-42a8-924e-0017bcdedecd",
+        //     "SNILS": "123-456-789 00",       // СНИЛС
+        //     "LastFgDate": "2020-09-24",      // Дата последнего флюрографического осмотра
+        //     "NextPrgDate": "2021-09-24",     // Дата следующего флюорографического осмотр
+        //     "PrgContingent": "Пенсионер"     // Контингент (флюорография)
         // }
-
 
     try 
     begin()
