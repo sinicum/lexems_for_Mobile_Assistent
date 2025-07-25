@@ -1,12 +1,12 @@
-// Метод /getHosps -- Список предыдущих госпитализаций
+// Метод /getCurrHosp  --Текущая госпитализация
 begin(patID, HospList, Hosp, qrEmergEvent ,status)
 
-    try 
+    try
     begin()
         
         @patID := @querystring["patId"];
         @status := 200;
-        //$throw(@patSNILS[0][0]);
+
         @HospList := new MP.HOSPS_LIST();
 
         if(@patID<>Null() and @patID<>"") 
@@ -14,7 +14,7 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
 
 
             //------- EMERGENCY_EVENT -------//
-            @qrEmergEvent := query {EventID}
+            @qrEmergEvent := query top 1 {EventID}
                                 ,{CreationDateTime}
                                 ,{CloseDate}
                                 ,{ReceptionDiagnosis / Mkb}
