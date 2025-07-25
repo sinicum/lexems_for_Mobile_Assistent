@@ -1,5 +1,5 @@
 // МП. Отдаю врачей по по ID МО или Филиала
-begin(WrkrsList, qrWrks, moWrkPosts, lpu, isLpu, status, err) 
+begin(WrkrsList, qrWrks, worker, moWrkPosts, lpu, isLpu, status, err) 
 
     //============== JSON СТРУКТУРА ОТВЕТА ==============
     // {
@@ -77,7 +77,7 @@ begin(WrkrsList, qrWrks, moWrkPosts, lpu, isLpu, status, err)
 
         if (@qrWrks->Count()>0)
         foreach(thisWrkr in @qrWrks)
-        begin(worker)
+        begin()
 
             @worker := new MP.MO_WORKERS();
             @worker->{id} := @thisWrkr-> {WorkerID};
