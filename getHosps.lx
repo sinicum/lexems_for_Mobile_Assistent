@@ -94,7 +94,7 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
             @HospList->{error} := "Не указан параметр patId";
         end;
 
-        @HospList->{error} := @qrEmergEvent->Count();
+        //@HospList->{error} := @qrEmergEvent->Count();
         
         @response.StatusCode:=@status;
         return(@HospList);
