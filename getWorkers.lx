@@ -1,4 +1,4 @@
-// МП. Отдаю врачей по по ID МО или Филиала
+// /getWorkers.  МП. Список врачей по ID МО или Филиала
 begin(WrkrsList, qrWrks, worker, moWrkPosts, lpu, isLpu, status, err) 
 
     //============== JSON СТРУКТУРА ОТВЕТА ==============
