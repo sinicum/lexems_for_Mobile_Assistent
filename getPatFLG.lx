@@ -1,0 +1,71 @@
+//  /getPatFLG. Фрюорография пациента
+begin(patID, qrPats, patFLG)
+
+        // ============== JSON структура  ==========
+        // {
+        //     "id": "c8df3915-fe16-486a-9dab-9cfa2722da8d",
+        //     "SNILS":"",
+        //     "LastFgDate": "string",
+        //     "NextPrgDate": "string",
+        //     "PrgContingent": 
+        // }
+
+
+    try 
+    begin()
+
+        @patID := @querystring["patId"]; // 0bf2e271-e565-42a8-924e-0017bcdedecd // ГАУЗ Азнакаевская ЦРБ  - №23 Тарвердиев Данис Давитович 26.04.1980
+
+        //@patMain := new MP.PATIENTS_LIST();
+
+        if (@patID <>Null()) //---- ЕСЛИ УКАЗАН ПАРАМЕТР "patID" --------------
+        begin()
+            if (RegularExpression("^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$", @patID) > 0 ) //---- ЕСЛИ верный формат "patID" ----
+            begin()
+
+                @qrPats := query top 1 {PatientID}
+                                    ,{SNILS / Snils}
+                                    ,{LastFgDate}
+                                    ,{NextPrgDate}
+                                    ,{PrgContingent / Name}
+                                    
+                from "AKUZ.PATIENT" where {PatientID} = @patID;
+
+                if (@qrPats->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
+                foreach(thisPatnt in @qrPats) begin(patient)
+
+                    @patFLG := new MP.PATIENT_FLG();
+                    @patFLG->{id} := @thisPatnt-> {PatientID};
+                    @patFLG->{SNILS} := @thisPatnt-> {SNILS / Snils};
+                    @patFLG->{LastFgDate} := @thisPatnt-> {LastFgDate};
+                    @patFLG->{NextPrgDate} := @thisPatnt-> {NextPrgDate};
+                    @patFLG->{PrgContingent} := @thisPatnt-> {PrgContingent / Name};
+
+                    //@patMain->{patients} -> Add(@patFLG);
+                end
+                else
+                begin()
+                    @status:=206;
+                    @patFLG->{error} := "Поиск по patID: пациент не найден";
+                end;
+            end
+            else begin() //-- КРИВОЙ СНИЛС
+                @status:=206;
+                @patFLG->{error} := "Параметр patID имеет неверный формат";
+            end;
+        end;
+
+        @response.StatusCode:=@status;
+        return(@patFLG);
+
+    end
+    catch(ex)
+    begin()
+
+        @patFLG->{error} := @ex-> {InnerException};
+
+        @response.StatusCode := 500;
+        return(@patFLG);
+
+    end;
+end
