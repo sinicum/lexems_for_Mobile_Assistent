@@ -1,5 +1,5 @@
 //  /getPatFLG. Фрюорография пациента
-begin(patID, qrPats, patFLG)
+begin(patID, qrPats, patFLG, status)
 
         // ============== JSON структура  ==========
         // {
@@ -15,7 +15,7 @@ begin(patID, qrPats, patFLG)
     begin()
 
         @patID := @querystring["patId"]; // 0bf2e271-e565-42a8-924e-0017bcdedecd // ГАУЗ Азнакаевская ЦРБ  - №23 Тарвердиев Данис Давитович 26.04.1980
-
+        @status :=200;
         //@patMain := new MP.PATIENTS_LIST();
 
         if (@patID <>Null()) //---- ЕСЛИ УКАЗАН ПАРАМЕТР "patID" --------------
@@ -37,8 +37,8 @@ begin(patID, qrPats, patFLG)
                     @patFLG := new MP.PATIENT_FLG();
                     @patFLG->{id} := @thisPatnt-> {PatientID};
                     @patFLG->{SNILS} := @thisPatnt-> {SNILS / Snils};
-                    @patFLG->{LastFgDate} := @thisPatnt-> {LastFgDate};
-                    @patFLG->{NextPrgDate} := @thisPatnt-> {NextPrgDate};
+                    @patFLG->{LastFgDate} := Str(@thisPatnt-> {LastFgDate},"yyyy-MM-dd");
+                    @patFLG->{NextPrgDate} := Str(@thisPatnt-> {NextPrgDate},"yyyy-MM-dd");
                     @patFLG->{PrgContingent} := @thisPatnt-> {PrgContingent / Name};
 
                     //@patMain->{patients} -> Add(@patFLG);
