@@ -49,7 +49,7 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
             //     ]
             // }
 
-            @HospList -> {error} := qrEmergEvent {HospitalDestinationList / HospitalDestinations}
+            //@HospList -> {error} := @qrEmergEvent[0]-> {HospitalDestinationList / HospitalDestinations}
 
             if (@qrEmergEvent->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
             foreach(thisEmergEvent in @qrEmergEvent)
