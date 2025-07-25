@@ -2,42 +2,44 @@
 begin(WrkrsList, qrWrks, worker, moWrkPosts, lpu, isLpu, status, err) 
 
     //============== JSON СТРУКТУРА ОТВЕТА ==============
-    // {
-    //     "Workers": [ 
-    //         {
-    //             "id": "dc911302-5044-46f4-b935-c6ffd85eb68f",
-    //             "SNILS": "059-486-659 26",
-    //             "lastName": "Камашев",
-    //             "firstName": "Владимир",
-    //             "middleName": "Михайлович",
-    //             "birthDate": "30.05.1961",
-    //             "positions": [
-    //                 {
-    //                     "id": "41019",
-    //                     "dateBegin": "01.08.2022",
-    //                     "departmentId": "10ea04ca-339a-4867-aab4-d9a83b7e9098",
-    //                     "departmentName": "Поликлиника",
-    //                     "positionName": "Врач-онколог",
-    //                     "positionFedCode": "3037",
-    //                     "positionRegName": "врач-онколог",
-    //                     "positionSpecialityCode": "41",
-    //                     "positionSpecialityName": "Онкология"
-    //                 },
-    //                 {
-    //                     "id": "22383",
-    //                     "dateBegin": "01.08.2022",
-    //                     "departmentId": "8000ab2e-c207-425b-9ee0-492b8bc383e3",
-    //                     "departmentName": "Стационар",
-    //                     "positionName": "Врач-хирург",
-    //                     "positionFedCode": "3086",
-    //                     "positionRegName": "врач-хирург",
-    //                     "positionSpecialityCode": "90",
-    //                     "positionSpecialityName": "Хирургия"
-    //                 }
-    //             ]
-    //         }
-    //     ]
-    // }
+{
+    "Workers": [ 
+        {
+            "id": "dc911302-5044-46f4-b935-c6ffd85eb68f",
+            "SNILS": "059-486-659 26",
+            "lastName": "Камашев",
+            "firstName": "Владимир",
+            "middleName": "Михайлович",
+            "birthDate": "30.05.1961",
+            "positions": [
+                {
+                    "id": "41019",
+                    "dateBegin": "01.08.2022",
+                    "departmentId": "10ea04ca-339a-4867-aab4-d9a83b7e9098",
+                    "departmentName": "Поликлиника",
+                    "positionName": "Врач-онколог",
+                    "positionFedCode": "3037",
+                    "positionRegName": "врач-онколог",
+                    "positionSpecialityCode": "41",
+                    "positionSpecialityName": "Онкология",
+                    "rate": "0,5000000000"
+                },
+                {
+                    "id": "22383",
+                    "dateBegin": "01.08.2022",
+                    "departmentId": "8000ab2e-c207-425b-9ee0-492b8bc383e3",
+                    "departmentName": "Стационар",
+                    "positionName": "Врач-хирург",
+                    "positionFedCode": "3086",
+                    "positionRegName": "врач-хирург",
+                    "positionSpecialityCode": "90",
+                    "positionSpecialityName": "Хирургия",
+                    "rate": "1,0000000000"
+                }
+            ]
+        }
+    ]
+}
 
 
     try
@@ -136,8 +138,8 @@ begin(WrkrsList, qrWrks, worker, moWrkPosts, lpu, isLpu, status, err)
 
         // @str := Substring(@str,0,StringLen(@str)-if(@qrWrks->count()=0) 0 else 1) + "]"; // дописал для count()=0
         // if (@err <> Null()) return(@err) else return(@str);
-        @WrkrsList->{error} := @err;
-        @response.StatusCode := 500;
+        if(@err<>Null())@WrkrsList->{error} := @err;
+        @response.StatusCode := @status;
         return(@WrkrsList);
 
     end
@@ -152,10 +154,10 @@ begin(WrkrsList, qrWrks, worker, moWrkPosts, lpu, isLpu, status, err)
                 
         @err-> {message} := @ex->{InnerException};
 
-        // if (str(IsNull(@ex -> {InnerException},""))<>"")
-        //     @err-> {message}:=SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}),char(13)+char(10)))
-        // else
-        //     @err-> {message}:="Прочая ошибка";
+        if (str(IsNull(@ex -> {InnerException},""))<>"")
+            @err-> {message}:=SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}),char(13)+char(10)))
+        else
+            @err-> {message}:="Прочая ошибка";
 
         @WrkrsList->{error} := @err;
         @response.StatusCode := 500;
