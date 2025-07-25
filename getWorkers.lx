@@ -47,8 +47,7 @@ begin(WrkrsList, qrWrks, worker, moWrkPosts, lpu, isLpu, status, err)
 
         @WrkrsList := new MP.WORKERS_LIST();
         @lpu := @querystring["departmentId"];//077c8a28-ef23-41ad-a056-8f8bab4a6c61
-        //@lpu := "";
-        //@str := "[";
+        @status := 200;
 
         if (RegularExpression("^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$", @lpu) > 0) 
         begin()
