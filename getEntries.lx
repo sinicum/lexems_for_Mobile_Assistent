@@ -9,70 +9,78 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
 
         @EntrsList := new MP.ENTRIES_LIST();
 
-        if(@patID<>Null() and @patID<>"") 
+        if (RegularExpression("^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$", @patID) > 0) 
         begin()
 
-            //------- ENTRY_AMBULANCE -------//
-            @qrEntries := query {Ticket / TicketTime}
-                                    ,{Ticket / TicketType}
-                                    ,{EntryPlace}   
-                                    ,{ObjectProperties / ObjectType / EntDesc}
-                                    ,{Resource / As AKUZ.POST / Worker / FIO}
-                                    ,{Resource / Speciality / Name}
-                                    ,{Resource / Division / Branch / Name}
-                                    ,{Resource / Division / Branch / LpuMain / Name} 
-                        from "AKUZ.ENTRY_AMBULANCE" 
-                        where {AmbulanceEvent / AmbulanceCard / Patient / PatientID} = @patID //where {SentSNILS} = @patSNILS
-                            and {EntryDate} >= param(CURRENT_DATE)
-                        ;
-
-
-            // ============== JSON структура  ==========
-            // {
-            //     "Entries": [ 
-            //         {
-            //             "DateTime": "dd-MM-yyyy HH:mm",              // Дата и время записи
-            //             "TicketType": "string",                      // Тип талона
-            //             "EntryPlace": "string",                      // Место записи
-            //             "EntryType": "string",                       // Тип записи
-            //             "Resource" : "Фамилия И.О. (специальность)", // Врач
-            //             "Branch": "string",                          // Подразделение
-            //             "LpuName": "string",                         // Наименование МО
-            //         }
-            //     ]
-            // }
-
-            //@EntrsList -> {error} := "";
-
-            if (@qrEntries->Count()>0 )  //----- НАЙДЕНЫ ЛИ ЗАПИСИ ------//
-            foreach(thisEntry in @qrEntries)
+            if(@patID<>Null() and @patID<>"") 
             begin()
 
-                @Entry := new MP.ENTRY();
+                //------- ENTRY_AMBULANCE -------//
+                @qrEntries := query {Ticket / TicketTime}
+                                        ,{Ticket / TicketType}
+                                        ,{EntryPlace}   
+                                        ,{ObjectProperties / ObjectType / EntDesc}
+                                        ,{Resource / As AKUZ.POST / Worker / FIO}
+                                        ,{Resource / Speciality / Name}
+                                        ,{Resource / Division / Branch / Name}
+                                        ,{Resource / Division / Branch / LpuMain / Name} 
+                            from "AKUZ.ENTRY_AMBULANCE" 
+                            where {AmbulanceEvent / AmbulanceCard / Patient / PatientID} = @patID //where {SentSNILS} = @patSNILS
+                                and {EntryDate} >= param(CURRENT_DATE)
+                            ;
 
-                @Entry->{DateTime} := Str(@thisEntry->{Ticket / TicketTime},"yyyy-MM-dd HH:mm");
-                @Entry->{TicketType} := Str(@thisEntry -> {Ticket / TicketType});
-                @Entry->{EntryPlace} := Str(@thisEntry->{EntryPlace});
-                @Entry->{EntryType} := @thisEntry->{ObjectProperties / ObjectType / EntDesc};
-                @Entry->{Resource} := @thisEntry->{Resource / As AKUZ.POST / DisplayName};
-                @Entry->{Branch} := @thisEntry ->{Resource / Division / Branch / Name};
-                @Entry->{LpuName} := @thisEntry ->{Resource / Division / Branch / LpuMain / Name} ;
+
+                // ============== JSON структура  ==========
+                // {
+                //     "Entries": [ 
+                //         {
+                //             "DateTime": "dd-MM-yyyy HH:mm",              // Дата и время записи
+                //             "TicketType": "string",                      // Тип талона
+                //             "EntryPlace": "string",                      // Место записи
+                //             "EntryType": "string",                       // Тип записи
+                //             "Resource" : "Фамилия И.О. (специальность)", // Врач
+                //             "Branch": "string",                          // Подразделение
+                //             "LpuName": "string",                         // Наименование МО
+                //         }
+                //     ]
+                // }
+
+                //@EntrsList -> {error} := "";
+
+                if (@qrEntries->Count()>0 )  //----- НАЙДЕНЫ ЛИ ЗАПИСИ ------//
+                foreach(thisEntry in @qrEntries)
+                begin()
+
+                    @Entry := new MP.ENTRY();
+
+                    @Entry->{DateTime} := Str(@thisEntry->{Ticket / TicketTime},"yyyy-MM-dd HH:mm");
+                    @Entry->{TicketType} := Str(@thisEntry -> {Ticket / TicketType});
+                    @Entry->{EntryPlace} := Str(@thisEntry->{EntryPlace});
+                    @Entry->{EntryType} := @thisEntry->{ObjectProperties / ObjectType / EntDesc};
+                    @Entry->{Resource} := @thisEntry->{Resource / As AKUZ.POST / DisplayName};
+                    @Entry->{Branch} := @thisEntry ->{Resource / Division / Branch / Name};
+                    @Entry->{LpuName} := @thisEntry ->{Resource / Division / Branch / LpuMain / Name} ;
 
 
-                @EntrsList->{Entries} -> Add(@Entry);
-                //@EntrsList->{error} := Str(@Entry,"Json");
+                    @EntrsList->{Entries} -> Add(@Entry);
+                    //@EntrsList->{error} := Str(@Entry,"Json");
 
-            end
-            else
+                end
+                else
+                begin()
+                    @status:=206;
+                    @EntrsList->{error} := "Не найдены записи по указанному patId";
+                end;
+
+            end else 
             begin()
                 @status:=206;
-                @EntrsList->{error} := "Не найдены записи по указанному patId";
+                @EntrsList->{error} := "Не указан параметр patId";
             end;
-
-        end else 
+        end else
         begin()
             @status:=206;
-            @EntrsList->{error} := "Не указан параметр patId";
+            @EntrsList->{error} := "Параметр patId имеет неверный формат";
         end;
 
         // @EntrsList->{error} := @qrEntries->Count();
