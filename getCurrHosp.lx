@@ -64,22 +64,13 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
                 @Hosp->{HospitalizationType} := @thisEmergEvent->{MedicalcardRegistration / HospitalizationType / Name};
                 @Hosp->{HospitalizationReason} := @thisEmergEvent->{MedicalcardRegistration / HospitalizationReason / Name};
                 
-                // @MedCertProlongs := @thisEmergEvent ->{MedicalCertificateProlongations};
-                // foreach(thisProlong in @MedCertProlongs)
-                // begin()
-                //     @ELNprlngtion := new MP.MED_CERT_PROLONGATION(); 
-                //     @ELNprlngtion -> {StartDate} := Str(@thisProlong ->{ProlongationStartDate},"yyyy-MM-dd");
-                //     @ELNprlngtion -> {ProlongationDate} := Str(@thisProlong ->{ProlongationDate},"yyyy-MM-dd");
-                //     @ELNprlngtion -> {Post} := @thisProlong ->{Post / DisplayName};
-                //     @Hosp->{Prolongations} -> Add(@ELNprlngtion);
-                // end;
 
                 @Hosp->{Division} := @thisEmergEvent ->{MedicalcardRegistration / Division / Name};
                 @Hosp->{LpuName} := @thisEmergEvent ->{AmbulanceCard / CardLpu / Name};
 
 
                 @HospList->{Hospitalizations} -> Add(@Hosp);
-                //@HospList->{error} := Str(@ELN,"Json");
+                //@HospList->{error} := Str(@Hosp,"Json");
 
             end
             else
