@@ -1,5 +1,4 @@
 // /getWorkers.  МП. Список врачей по ID МО или Филиала
-begin(WrkrsList, qrWrks, worker, moWrkPosts, lpu, isLpu, status, err) 
 
     //============== JSON СТРУКТУРА ОТВЕТА ==============
     // {
@@ -14,15 +13,15 @@ begin(WrkrsList, qrWrks, worker, moWrkPosts, lpu, isLpu, status, err)
     //             "positions": [
     //                 {
     //                     "id": "41019",
-    //                     "dateBegin": "01.08.2022",
-    //                     "departmentId": "10ea04ca-339a-4867-aab4-d9a83b7e9098",
-    //                     "departmentName": "Поликлиника",
-    //                     "positionName": "Врач-онколог",
-    //                     "positionFedCode": "3037",
-    //                     "positionRegName": "врач-онколог",
-    //                     "positionSpecialityCode": "41",
-    //                     "positionSpecialityName": "Онкология",
-    //                     "rate": "0,5000000000"
+    //                     "dateBegin": "01.08.2022",                               // Дата приёма на работу
+    //                     "departmentId": "10ea04ca-339a-4867-aab4-d9a83b7e9098",  // ID ФИЛИАЛА
+    //                     "departmentName": "Поликлиника",                         // краткое наименование филиала
+    //                     "positionName": "Врач-онколог",                          // Тип должности.Наименование (POST_TYPE)
+    //                     "positionFedCode": "3037",                               // Тип должности.Код  (POST_TYPE)
+    //                     "positionRegName": "врач-онколог",                       // ФРМР. Должности медицинского персонала 
+    //                     "positionSpecialityCode": "41",                          // Код специальности по V021
+    //                     "positionSpecialityName": "Онкология",                   // Наименование специальности по V021
+    //                     "rate": "0,5000000000"                                   // Ставка
     //                 },
     //                 {
     //                     "id": "22383",
