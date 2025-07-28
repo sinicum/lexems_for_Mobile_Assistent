@@ -69,6 +69,7 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
         @statusCode:= @result["Response"]->{StatusCode}; // 200 - Работает
         @json2 := str(@result["Body"],"Json"); // весь ответ в строке в json
 
+        @owner.DoRefresh();
         
         // @obj := {IncomingComplaints} := 
         $throw(@json2);
@@ -94,5 +95,5 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
     // @rso -> {CreateDateTime}:= param(CURRENT_DATE_TIME);
     // @rso -> Save();
     ////////////////////////////////////////////////////////
-
+    
 end;
