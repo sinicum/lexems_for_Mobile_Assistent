@@ -1,0 +1,63 @@
+
+begin(qrET,ETs,ET,ETBundle)
+//    declare MP.ETs(Types:MP.ET[Collection],Info:string);
+//    declare MP.ET(Collection:MP.ETs,Name:string,Code:string,Bundles:MP.ETBundle[Collection2]);
+//    declare MP.ETBundle(Collection2:MP.ET,AgeGroupName:string,AgeGroupCriteria:string,MedicalServiceCode:string,MedicalServiceName:string,SpecialityName:string);
+
+
+//{
+//    "Types": [
+//        {
+//            "Name": "ДВН 1 этап _old",
+//            "Code": "004",
+//            "Bundles": [
+//                {
+//                    "AgeGroupName": "Дети 1 мес",
+//                    "AgeGroupCriteria": "<lx:Criteria xmlns:lx=\"lexem\" type=\"And\"><lx:Criterion type=\"&lt;\"><lx:UserQueryOperand type=\"Const\" expectedValueSpecification=\"System.DateTime\" name=\"ActualDate\"/><lx:DateAdd datepart=\"Month\"><lx:ConstOperand type=\"Int32\">2</lx:ConstOperand><lx:Path OwnerQueryLevel=\"0\"><lx:StepInt index=\"5240005\"/><lx:StepInt index=\"5220002\"/><lx:StepInt index=\"5040015\"/></lx:Path></lx:DateAdd></lx:Criterion><lx:Criterion type=\"&gt;=\"><lx:UserQueryOperand type=\"Const\" expectedValueSpecification=\"System.DateTime\" name=\"ActualDate\"/><lx:DateAdd datepart=\"Month\"><lx:ConstOperand type=\"Int32\">1</lx:ConstOperand><lx:Path OwnerQueryLevel=\"0\"><lx:StepInt index=\"5240005\"/><lx:StepInt index=\"5220002\"/><lx:StepInt index=\"5040015\"/></lx:Path></lx:DateAdd></lx:Criterion></lx:Criteria>",
+//                    "MedicalServiceCode": "B04.010.002",
+//                    "MedicalServiceName": "Посещение к врачу-хирургу детскому",
+//                    "SpecialityName": "Детский хирург"
+//                },
+//                {}
+//            ]
+//        }
+//        ,{},
+//        "Info":""
+//    ]
+//}
+    
+    @ETs := new MP.ETs();
+    @ETs -> {Info} := Null();
+    
+    @qrET:= query {Name},{Code}
+    ,{BundleMedicalExaminations / AgeGroup / Name}
+    ,{BundleMedicalExaminations / AgeGroup / Criteria} 
+    ,{BundleMedicalExaminations / MedicalService / Code}
+    ,{BundleMedicalExaminations / MedicalService / Name}
+    ,{BundleMedicalExaminations / Speciality / Name}
+    from "EXAMINATION_TYPE" ;
+  
+    foreach(thisqrET in @qrET)
+        begin()
+            @ET := new MP.ET();
+            @ET -> {Name} := @thisqrET->{Name};
+            @ET -> {Code} := @thisqrET->{Code};
+            foreach(Bun in @thisqrET->{BundleMedicalExaminations})
+                begin(ETBun)
+                    @ETBundle := new MP.ETBundle();
+                    @ETBundle -> {AgeGroupName} := @Bun->{AgeGroup / Name};
+                    @ETBundle -> {AgeGroupCriteria} := @Bun->{AgeGroup / Criteria};
+                    @ETBundle -> {MedicalServiceCode} := @Bun->{MedicalService / Code};
+                    @ETBundle -> {MedicalServiceName} := @Bun->{MedicalService / Name};
+                    @ETBundle -> {SpecialityName} := @Bun->{Speciality / Name};
+                    if (@Bun->{Speciality / Name} <> Null() or @Bun->{MedicalService / Name} <> Null())
+                        @ET -> {Bundles} -> Add(@ETBundle);
+                end;
+            @ETs -> {Types} -> Add(@ET);
+        end;
+    
+    @ETs := Replace(Str(@ETs,"Json"),"\"flags_\":\"1\",","");
+    print(@ETs);
+    return(@ETs); 
+    
+end;  
