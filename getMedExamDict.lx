@@ -52,6 +52,8 @@ begin(qrET,ExamTypes,EType,ETypeBundle)
             @ETypeBundle := new MP.EXAM_TYPE_BUNDLE();
             @ETypeBundle -> {AgeGroupName} := @Bun->{AgeGroup / Name};
             @ETypeBundle -> {AgeGroupCriteria} := @Bun->{AgeGroup / Criteria};
+            @ETypeBundle -> {Required} := @Bun->Str({Condition}); 
+            @ETypeBundle -> {Type} := @Bun->Str({Type}); 
             @ETypeBundle -> {MedicalServiceCode} := @Bun->{MedicalService / Code};
             @ETypeBundle -> {MedicalServiceName} := @Bun->{MedicalService / Name};
             @ETypeBundle -> {SpecialityName} := @Bun->{Speciality / Name};
