@@ -69,11 +69,11 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                                 where {AmbulanceCardRecord / MedicalRecordID} = @drID
                                     and {ActualRemdEmdrMessage / RegistrationState} = 3 // статус зарегистрирован
                                 ;
-                    if (@qrCardNote->Count()>0) @EmdrID:= @selCardNote[0];
-                    if (@qrCardNote->Count()>0) @EmdrDate:= @selCardNote[1];                    
+                    if (@qrCardNote->Count()>0) @EmdrID:= @qrCardNote[0]-> {ActualRemdEmdrMessage / EmdrID};
+                    if (@qrCardNote->Count()>0) @EmdrDate:= @qrCardNote[0] -> {ActualRemdEmdrMessage / RegistrationDate};                    
 
                     @DiagRes->{DiagResultID} := @drID;
-                    if(@thisDiagResult->{CloseDate}<>Null()) @DiagRes->{CloseDate} := 
+                    if(@EmdrID<>Null()) @DiagRes->{EmdrID} := @EmdrID;
                     @DiagRes->{PostingDate} := Str(@thisDiagResult->{PostingDate},"yyyy-MM-dd HH:mm");
                     @DiagRes->{MedServiceCode} := @thisDiagResult ->{Research / Code};
                     @DiagRes->{Post} := @thisDiagResult ->{Post / DiaplayName};
