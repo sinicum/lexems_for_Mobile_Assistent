@@ -19,11 +19,11 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, selCardNote, EmdrID, Emd
                 // CARD_NOTE - 5cf64466-e248-4dc0-9ddc-efb0a2e46445  // 224 - Протокол инструментального исследования (CDA) Редакция 5 // 224.16.25.05.000080291
                 //------- DIAGNOSTICS_RESULTS -------// 1407910a-1901-4b21-be2d-0ef89041f4fe // 06.05.2025	
                 @qrDiagResults := query  {MedicalRecordID}
-                                        ,{AmbulanceCardRecord / MedicalRecordID}
                                         ,{PostingDate}
                                         ,{Research / Code}
                                         ,{Research / Name}
-                                        ,{Post / DiaplayName}
+                                        ,{Post / Worker/FIO}
+                                        ,{Post / Speciality/Name}
                                         ,{ResearchLpu / Name}
 
                                         //,{CardNotes}
@@ -56,7 +56,7 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, selCardNote, EmdrID, Emd
 
                     @DiagRes := new MP.DIAG_RESULT();
 
-                    @drID := @thisDiagResult -> {AmbulanceCardRecord / MedicalRecordID};
+                    @drID := @thisDiagResult -> {MedicalRecordID};
                     @selCardNote := select top 1 {ActualRemdEmdrMessage / EmdrID}, {ActualRemdEmdrMessage / RegistrationDate}
                                 from "AKUZ.CARD_NOTE" 
                                 where {AmbulanceCardRecord / MedicalRecordID} = @drID
