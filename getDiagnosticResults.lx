@@ -76,7 +76,7 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                     if(@EmdrID<>Null()) @DiagRes->{EmdrID} := @EmdrID;
                     @DiagRes->{PostingDate} := Str(@thisDiagResult->{PostingDate},"yyyy-MM-dd HH:mm");
                     @DiagRes->{MedServiceCode} := @thisDiagResult ->{Research / Code};
-                    @DiagRes->{Post} := @thisDiagResult ->{Post / DiaplayName};
+                    @DiagRes->{Post} := @thisDiagResult ->{Post / DisplayName};
                     @DiagRes->{LpuName} := @thisDiagResult ->{ResearchLpu / Name};
                     
 
