@@ -5,8 +5,8 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
 ,{AmbulanceCard / CardLpu / LpuID}}
 
     declare MP.POST_EVENTID(
-            patID:string
-            ,eventID:string
+            patId:string
+            ,eventId:string
             ,dateTime:DateTime
             ,MO_id:string
         );
@@ -29,7 +29,7 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
     @obj := {.};        // 86a671b0-75fa-4ca5-af33-6813387adc6f
     
     @body := new MP.POST_EVENTID();
-    @body -> {patID} := @obj->{AmbulanceCard / Patient / PatientID};    
+    @body -> {patId} := @obj->{AmbulanceCard / Patient / PatientID};    
     // @body -> {eventID}:= @obj->{EventID};
     // @body -> {dateTime} := Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm:ss");
     // @body -> {MO_id} := @obj->{AmbulanceCard / CardLpu / LpuID} ;
@@ -44,15 +44,15 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
     @json:=Replace(Str(@body,"Json"),"\"flags_\":\"1\",","");
     //$throw(@json);
 
-    // @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
-    // @rso -> {QueueName}:=@address;
-    // @rso -> {Content}:=@json;
-    // @rso -> {RoutingKey}:="";
-    // @rso -> {Type}:="TEST_COMPLAINT_REQUEST";
-    // @rso -> {State}:=1;
-    // @rso -> {ContentEncoding}:="utf-8";
-    // @rso -> {CreateDateTime}:= param(CURRENT_DATE_TIME);
-    // @rso -> Save();
+    @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
+    @rso -> {QueueName}:=@address;
+    @rso -> {Content}:=@json;
+    @rso -> {RoutingKey}:="";
+    @rso -> {Type}:="TEST_COMPLAINT_REQUEST";
+    @rso -> {State}:=1;
+    @rso -> {ContentEncoding}:="utf-8";
+    @rso -> {CreateDateTime}:= param(CURRENT_DATE_TIME);
+    @rso -> Save();
     ////////////////////////////////////////////////////////
 
     // try
