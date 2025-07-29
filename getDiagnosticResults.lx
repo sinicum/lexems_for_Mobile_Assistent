@@ -1,5 +1,5 @@
 // Метод /getDiagnosticResults -- Список Результатов исследований
-begin(patID, DiagResList, DiagRes, qrDiagResults, drID, selCardNote, EmdrID, EmdrDate ,status)
+begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote, EmdrID, EmdrDate ,status)
 
     try 
     begin()
@@ -57,13 +57,20 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, selCardNote, EmdrID, Emd
                     @DiagRes := new MP.DIAG_RESULT();
 
                     @drID := @thisDiagResult -> {MedicalRecordID};
-                    @selCardNote := select top 1 {ActualRemdEmdrMessage / EmdrID}, {ActualRemdEmdrMessage / RegistrationDate}
+                    // @selCardNote := select top 1 {ActualRemdEmdrMessage / EmdrID}, {ActualRemdEmdrMessage / RegistrationDate}
+                    //             from "AKUZ.CARD_NOTE" 
+                    //             where {AmbulanceCardRecord / MedicalRecordID} = @drID
+                    //                 and {ActualRemdEmdrMessage / RegistrationState} = 3 // статус зарегистрирован
+                    //             ;
+                    // if (@selCardNote<>Null()) @EmdrID:= @selCardNote[0][0];
+                    // if (@selCardNote<>Null()) @EmdrDate:= @selCardNote[0][1];
+                    @qrCardNote := query top 1 {ActualRemdEmdrMessage / EmdrID}, {ActualRemdEmdrMessage / RegistrationDate}
                                 from "AKUZ.CARD_NOTE" 
                                 where {AmbulanceCardRecord / MedicalRecordID} = @drID
                                     and {ActualRemdEmdrMessage / RegistrationState} = 3 // статус зарегистрирован
                                 ;
-                    if (@selCardNote<>Null()) @EmdrID:= @selCardNote[0][0];
-                    if (@selCardNote<>Null()) @EmdrDate:= @selCardNote[0][1];
+                    if (@qrCardNote->Count()>0) @EmdrID:= @selCardNote[0];
+                    if (@qrCardNote->Count()>0) @EmdrDate:= @selCardNote[1];                    
 
                     @DiagRes->{DiagResultID} := @drID;
                     if(@thisDiagResult->{CloseDate}<>Null()) @DiagRes->{CloseDate} := 
