@@ -1,5 +1,5 @@
 // /getWorkers.  МП. Список врачей по ID МО или Филиала
-
+begin(qrWrks, moWrkPosts, lpu, isLpu, str, err) 
     //============== JSON СТРУКТУРА ОТВЕТА ==============
     // {
     //     "Workers": [ 
