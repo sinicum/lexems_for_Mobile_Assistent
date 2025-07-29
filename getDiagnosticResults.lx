@@ -1,13 +1,13 @@
-// Метод /getDiagnosticResults -- Результаты исследований
-begin(patID, HospList, Hosp, qrEmergEvent ,status)
+// Метод /getDiagnosticResults -- Список Результатов исследований
+begin(patID, DiagResList, DiagRes, qrDiagResults, drID, selCardNote, EmdrID, EmdrDate ,status)
 
     try 
     begin()
         
-        @patID := @querystring["patId"];
+        @patID := @querystring["patId"];    // №445721 Абдуллин Салават Александрович 22.06.1986 // 4867cc79-9805-4ae2-98d3-2f822848635e
         @status := 200;
-        //$throw(@patSNILS[0][0]);
-        @HospList := new MP.HOSPS_LIST();
+
+        @DiagResList := new MP.DIAG_RESULTS_LIST();
 
 
         if (RegularExpression("^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$", @patID) > 0) 
@@ -15,86 +15,89 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
 
             if(@patID<>Null() and @patID<>"") 
             begin()
+                
+                // CARD_NOTE - 5cf64466-e248-4dc0-9ddc-efb0a2e46445  // 224 - Протокол инструментального исследования (CDA) Редакция 5 // 224.16.25.05.000080291
+                //------- DIAGNOSTICS_RESULTS -------// 1407910a-1901-4b21-be2d-0ef89041f4fe // 06.05.2025	
+                @qrDiagResults := query  {MedicalRecordID}
+                                        ,{AmbulanceCardRecord / MedicalRecordID}
+                                        ,{PostingDate}
+                                        ,{Research / Code}
+                                        ,{Research / Name}
+                                        ,{Post / DiaplayName}
+                                        ,{ResearchLpu / Name}
 
+                                        //,{CardNotes}
 
-                //------- EMERGENCY_EVENT -------//
-                @qrEmergEvent := query {EventID}
-                                    ,{CreationDateTime}
-                                    ,{CloseDate}
-                                    ,{ReceptionDiagnosis / Mkb}
-                                    ,{ReceptionDiagnosis / Diagnosis}
-                                    //,{MedicalcardRegistration / Diagnosis}
-
-                                    ,{MedicalcardRegistration / HospitalizationType / Name}
-                                    ,{MedicalcardRegistration / HospitalizationReason / Name}
-                                    ,{MedicalcardRegistration / Division / Name}
-                                    ,{AmbulanceCard / CardLpu / Name}
-
-                                    ,{HospitalDestinationList / HospitalDestinations}
-
-                            from "AKUZ.EMERGENCY_EVENT" 
+                            from "AKUZ.DIAGNOSTICS_RESULTS" 
                             where {AmbulanceCard / Patient / PatientID} = @patID //where {SentSNILS} = @patSNILS
                             ;
 
 
                 // ============== JSON структура  ==========
                 // {
-                //     "Hospitalizations": [ 
+                //     "DainosticsResults": [ 
                 //         {
-                //             "EventID": "GUID"                         // Идентификатор случая
-                //             "CreationDateTime": "dd-MM-yyyy HH:mm",   // Дата и время регистрации
-                //             "CloseDate": "dd-MM-yyyy",                // Дата закрытия
-                //             "ReceptionDiagnosis" : "string",          // Диагноз при поступлении
-                //             "HospitalizationType": "string",          // Вид госпитализации
-                //             "HospitalizationReason": "string",        // Причина госпитализации
-                //             "Division": "string",                     // Отделение
-                //             "LpuName": "string",                      // Наименование МО
+                //             "DiagResultID": "GUID"               // Идентификатор результат
+                //             "EmdrID":"224.16.25.05.000080291",   //
+                //             "PostingDate": "dd-MM-yyyy",         // Дата события
+                //             "MedServiceCode": "string",          // Наименование исследования
+                //             "MedServiceName": "string", 
+                //             "Post": "string",                    // Врач
+                //             "LpuName": "string",                 // Наименование МО     // {ResearchLpu / NameFull}
                 //         }
                 //     ]
                 // }
 
-                //@HospList -> {error} := qrEmergEvent {HospitalDestinationList / HospitalDestinations}
+                //@DiagResList -> {error} := 
 
-                if (@qrEmergEvent->Count()>0 )  //----- НАЙДЕНЫ ЛИ ГОСПИТАЛИЗАЦИИ ------//
-                foreach(thisEmergEvent in @qrEmergEvent)
+                if (@qrDiagResults->Count()>0 )  //----- НАЙДЕНЫ ЛИ РЕЗУЛЬТАТЫ --- //ГОСПИТАЛИЗАЦИИ ------//
+                foreach(thisDiagResult in @qrDiagResults)
                 begin()
 
-                    @Hosp := new MP.HOSP_EVENT();
-                    @Hosp->{EventID} := @thisEmergEvent ->{EventID};
-                    @Hosp->{CreationDateTime} := Str(@thisEmergEvent->{CreationDateTime},"yyyy-MM-dd HH:mm");
-                    if(@thisEmergEvent->{CloseDate}<>Null()) @Hosp->{CloseDate} := Str(@thisEmergEvent->{CloseDate},"yyyy-MM-dd");
-                    @Hosp->{ReceptionDiagnosis} := @thisEmergEvent -> {ReceptionDiagnosis / Mkb} +" | "+ @thisEmergEvent -> {ReceptionDiagnosis / Diagnosis};
+                    @DiagRes := new MP.DIAG_RESULT();
 
-                    @Hosp->{HospitalizationType} := @thisEmergEvent->{MedicalcardRegistration / HospitalizationType / Name};
-                    @Hosp->{HospitalizationReason} := @thisEmergEvent->{MedicalcardRegistration / HospitalizationReason / Name};
+                    @drID := @thisDiagResult -> {AmbulanceCardRecord / MedicalRecordID};
+                    @selCardNote := select top 1 {ActualRemdEmdrMessage / EmdrID}, {ActualRemdEmdrMessage / RegistrationDate}
+                                from "AKUZ.CARD_NOTE" 
+                                where {AmbulanceCardRecord / MedicalRecordID} = @drID
+                                    and {ActualRemdEmdrMessage / RegistrationState} = 3 // статус зарегистрирован
+                                ;
+                    if (@selCardNote[0][0]<>Null()) @EmdrID:= @selCardNote[0][0];
+                    if (@selCardNote[0][1]<>Null()) @EmdrDate:= @selCardNote[0][1];
+
+                    @DiagRes->{DiagResultID} := @thisDiagResult ->{EventID};
+                    if(@thisDiagResult->{CloseDate}<>Null()) @DiagRes->{CloseDate} := 
+                    @DiagRes->{PostingDate} := Str(@thisDiagResult->{PostingDate},"yyyy-MM-dd HH:mm");
+                    @DiagRes->{MedServiceCode} := @thisDiagResult ->{Research / Code};
+                    @DiagRes->{Post} := @thisDiagResult ->{Post / DiaplayName};
+                    @DiagRes->{LpuName} := @thisDiagResult ->{ResearchLpu / Name};
                     
-                    @Hosp->{Division} := @thisEmergEvent ->{MedicalcardRegistration / Division / Name};
-                    @Hosp->{LpuName} := @thisEmergEvent ->{AmbulanceCard / CardLpu / Name};
 
-                    @HospList->{Hospitalizations} -> Add(@Hosp);
-                    //@HospList->{error} := Str(@Hosp,"Json");
+
+                    @DiagResList->{DiagResitalizations} -> Add(@DiagRes);
+                    //@DiagResList->{error} := Str(@DiagRes,"Json");
 
                 end
                 else
                 begin()
                     @status:=206;
-                    @HospList->{error} := "Не найдены госпитализации по указанному patId";
+                    @DiagResList->{error} := "Не найдены результаты по указанному patId";
                 end;
             end else 
             begin()
                 @status:=206;
-                @HospList->{error} := "Не указан параметр patId";
+                @DiagResList->{error} := "Не указан параметр patId";
             end;
         end else
         begin()
             @status:=206;
-            @HospList->{error} := "Параметр patId имеет неверный формат";
+            @DiagResList->{error} := "Параметр patId имеет неверный формат";
         end;
 
-        //@HospList->{error} := @qrEmergEvent->Count();
+        //@DiagResList->{error} := @qrEmergEvent->Count();
         
         @response.StatusCode:=@status;
-        return(@HospList);
+        return(@DiagResList);
     end
     catch(ex)
     begin()
@@ -106,8 +109,8 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
     
         @status:=500;
         @response.StatusCode:=@status;
-        @HospList->{error} := @ex-> {InnerException};//  Str(@ELN,"Json");
-        return(@HospList);
+        @DiagResList->{error} := @ex-> {InnerException};//  Str(@ELN,"Json");
+        return(@DiagResList);
 
     end;
 end
