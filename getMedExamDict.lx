@@ -34,8 +34,8 @@ begin(qrET,ExamTypes,EType,ETypeBundle)
     @qrET:= query {Name},{Code}
                 ,{BundleMedicalExaminations / AgeGroup / Name}
                 ,{BundleMedicalExaminations / AgeGroup / Criteria}
-                ,{Condition}
-                ,{Type}
+                ,{BundleMedicalExaminations / Condition}
+                ,{BundleMedicalExaminations / Type}
                 ,{BundleMedicalExaminations / MedicalService / Code}
                 ,{BundleMedicalExaminations / MedicalService / Name}
                 ,{BundleMedicalExaminations / Speciality / Name}
@@ -52,8 +52,8 @@ begin(qrET,ExamTypes,EType,ETypeBundle)
             @ETypeBundle := new MP.EXAM_TYPE_BUNDLE();
             @ETypeBundle -> {AgeGroupName} := @Bun->{AgeGroup / Name};
             @ETypeBundle -> {AgeGroupCriteria} := @Bun->{AgeGroup / Criteria};
-            @ETypeBundle -> {Required} := @Bun->Str({Condition}); 
-            @ETypeBundle -> {Type} := @Bun->Str({Type}); 
+            @ETypeBundle -> {Required} := @Bun->Str({BundleMedicalExaminations / Condition}); 
+            @ETypeBundle -> {Type} := @Bun->Str({BundleMedicalExaminations / Type}); 
             @ETypeBundle -> {MedicalServiceCode} := @Bun->{MedicalService / Code};
             @ETypeBundle -> {MedicalServiceName} := @Bun->{MedicalService / Name};
             @ETypeBundle -> {SpecialityName} := @Bun->{Speciality / Name};
