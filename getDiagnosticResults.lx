@@ -62,10 +62,10 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, selCardNote, EmdrID, Emd
                                 where {AmbulanceCardRecord / MedicalRecordID} = @drID
                                     and {ActualRemdEmdrMessage / RegistrationState} = 3 // статус зарегистрирован
                                 ;
-                    if (@selCardNote[0][0]<>Null()) @EmdrID:= @selCardNote[0][0];
-                    if (@selCardNote[0][1]<>Null()) @EmdrDate:= @selCardNote[0][1];
+                    if (@selCardNote<>Null()) @EmdrID:= @selCardNote[0][0];
+                    if (@selCardNote<>Null()) @EmdrDate:= @selCardNote[0][1];
 
-                    @DiagRes->{DiagResultID} := @thisDiagResult ->{EventID};
+                    @DiagRes->{DiagResultID} := @drID;
                     if(@thisDiagResult->{CloseDate}<>Null()) @DiagRes->{CloseDate} := 
                     @DiagRes->{PostingDate} := Str(@thisDiagResult->{PostingDate},"yyyy-MM-dd HH:mm");
                     @DiagRes->{MedServiceCode} := @thisDiagResult ->{Research / Code};
