@@ -81,7 +81,7 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                     
 
 
-                    @DiagResList->{DainosticsResults} -> Add(@DiagRes);  DiagResitalizations  DainosticsResults
+                    @DiagResList->{DainosticsResults} -> Add(@DiagRes);  
                     //@DiagResList->{error} := Str(@DiagRes,"Json");
 
                 end
