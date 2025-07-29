@@ -8,15 +8,17 @@ begin(qrET,ExamTypes,EType,ETypeBundle)
     //{
     //    "MedExamTypes": [
     //        {
-    //            "Name": "ДВН 1 этап _old",
+    //            "Name": "ДВН 1 этап. приказ 404н",
     //            "Code": "004",
     //            "MedExamItems": [
     //                {
-    //                    "AgeGroupName": "Дети 1 мес",
-    //                    "AgeGroupCriteria": "<lx:Criteria xmlns:lx=\"lexem\" type=\"And\"><lx:Criterion type=\"&lt;\"><lx:UserQueryOperand type=\"Const\" expectedValueSpecification=\"System.DateTime\" name=\"ActualDate\"/><lx:DateAdd datepart=\"Month\"><lx:ConstOperand type=\"Int32\">2</lx:ConstOperand><lx:Path OwnerQueryLevel=\"0\"><lx:StepInt index=\"5240005\"/><lx:StepInt index=\"5220002\"/><lx:StepInt index=\"5040015\"/></lx:Path></lx:DateAdd></lx:Criterion><lx:Criterion type=\"&gt;=\"><lx:UserQueryOperand type=\"Const\" expectedValueSpecification=\"System.DateTime\" name=\"ActualDate\"/><lx:DateAdd datepart=\"Month\"><lx:ConstOperand type=\"Int32\">1</lx:ConstOperand><lx:Path OwnerQueryLevel=\"0\"><lx:StepInt index=\"5240005\"/><lx:StepInt index=\"5220002\"/><lx:StepInt index=\"5040015\"/></lx:Path></lx:DateAdd></lx:Criterion></lx:Criteria>",
-    //                    "MedicalServiceCode": "B04.010.002",
-    //                    "MedicalServiceName": "Посещение к врачу-хирургу детскому",
-    //                    "SpecialityName": "Детский хирург"
+    //                    "AgeGroupName": "жен(18,21,24,27,30,33,36,39,42,45,48,51,54,57,60,63)",   // Наименование возрастной группы
+    //                    "AgeGroupCriteria": "<lx:Criteria ...</lx:Criteria>",                     // Критерий возрасто-половой для 
+    //                    "Required":"Обязательный/Дополнительный"                                  // Обязательность               // {Condition} Условие на выполнение
+    //                    "Type":"Специальность/Услуга"                                             // Тип                          // {Type} Тип
+    //                    "MedicalServiceCode": "B04.010.002",                                      // Код услуги                   // {MedicalService / Code};
+    //                    "MedicalServiceName": "Осмотр фельдшером (акушеркой) или врачом акушером",// Наименрование услуги     // {MedicalService / Name};
+    //                    "SpecialityName": "Акушер-гинеколог"                                      // Специальность                // {Speciality / Name}
     //                },
     //                {}
     //            ]
@@ -32,6 +34,8 @@ begin(qrET,ExamTypes,EType,ETypeBundle)
     @qrET:= query {Name},{Code}
                 ,{BundleMedicalExaminations / AgeGroup / Name}
                 ,{BundleMedicalExaminations / AgeGroup / Criteria}
+                ,{Condition}
+                ,{Type}
                 ,{BundleMedicalExaminations / MedicalService / Code}
                 ,{BundleMedicalExaminations / MedicalService / Name}
                 ,{BundleMedicalExaminations / Speciality / Name}
@@ -51,14 +55,15 @@ begin(qrET,ExamTypes,EType,ETypeBundle)
             @ETypeBundle -> {MedicalServiceCode} := @Bun->{MedicalService / Code};
             @ETypeBundle -> {MedicalServiceName} := @Bun->{MedicalService / Name};
             @ETypeBundle -> {SpecialityName} := @Bun->{Speciality / Name};
-            if (@Bun->{Speciality / Name} <> Null() or @Bun->{MedicalService / Name} <> Null())
-                @EType -> {MedExamItems} -> Add(@ETypeBundle);
+            // if (@Bun->{Speciality / Name} <> Null() or @Bun->{MedicalService / Name} <> Null())
+            
+            @EType -> {MedExamItems} -> Add(@ETypeBundle);
         end;
         @ExamTypes -> {MedExamTypes} -> Add(@EType);
     end;
     
     @ExamTypes := Replace(Str(@ExamTypes,"Json"),"\"flags_\":\"1\",","");
-    print(@ExamTypes);
+    // print(@ExamTypes);
     return(@ExamTypes); 
     
 end;  
