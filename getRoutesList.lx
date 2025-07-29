@@ -61,7 +61,7 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
             //             "Type": "string"                         // Тип ROUTE_TO_DOCTOR_INSPECTION - ко вроачу, ROUTE_TO_DIAGNOSTICS - на исследование
             //             "CreationDateTime": "dd-MM-yyyy HH:mm",  // Дата и время создания
             //             "Name" : "string",                       // Наименование услуги / специальности
-            //             "Place": "string",                       // Место приёма
+            //             "Place": "string",                       // Место приёма                         {EntryAmbulance / Place}
             //             "HospitalizationReason": "string",       // Причина госпитализации
             //             "ResultExits": "string",                 // Исполнение
             //             "LpuName": "string",                     // Наименование МО
