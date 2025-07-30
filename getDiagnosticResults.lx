@@ -18,7 +18,7 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                 
                 // CARD_NOTE - 5cf64466-e248-4dc0-9ddc-efb0a2e46445  // 224 - Протокол инструментального исследования (CDA) Редакция 5 // 224.16.25.05.000080291
                 //------- DIAGNOSTICS_RESULTS -------// 1407910a-1901-4b21-be2d-0ef89041f4fe // 06.05.2025	
-                @qrDiagResults := query  {MedicalRecordID}
+                @qrDiagResults := query top 5 {MedicalRecordID}
                                         ,{PostingDate}
                                         ,{Research / Code}
                                         ,{Research / Name}
@@ -30,6 +30,7 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
 
                             from "AKUZ.DIAGNOSTICS_RESULTS" 
                             where {AmbulanceCard / Patient / PatientID} = @patID //where {SentSNILS} = @patSNILS
+                            order by {PostingDate} desc
                             ;
 
 
@@ -38,10 +39,10 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                 //     "DainosticsResults": [ 
                 //         {
                 //             "DiagResultID": "GUID"               // Идентификатор результат
-                //             "EmdrID":"224.16.25.05.000080291",   //
+                //             "EmdrID":"224.16.25.05.000080291",   // Идентификатор ЭМД , для запроса в АЭМД
                 //             "PostingDate": "dd-MM-yyyy",         // Дата события
-                //             "MedServiceCode": "string",          // Наименование исследования
-                //             "MedServiceName": "string", 
+                //             "MedServiceCode": "string",          // Код исследования
+                //             "MedServiceName": "string",          // Наименование исследования
                 //             "Post": "string",                    // Врач
                 //             "LpuName": "string",                 // Наименование МО     // {ResearchLpu / NameFull}
                 //         }
@@ -50,7 +51,7 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
 
                 //@DiagResList -> {error} := 
 
-                if (@qrDiagResults->Count()>0 )  //----- НАЙДЕНЫ ЛИ РЕЗУЛЬТАТЫ --- //ГОСПИТАЛИЗАЦИИ ------//
+                if (@qrDiagResults->Count()>0 )  //----- НАЙДЕНЫ ЛИ РЕЗУЛЬТАТЫ ---------//
                 foreach(thisDiagResult in @qrDiagResults)
                 begin()
 
@@ -74,8 +75,9 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
 
                     @DiagRes->{DiagResultID} := @drID;
                     if(@EmdrID<>Null()) @DiagRes->{EmdrID} := @EmdrID;
-                    @DiagRes->{PostingDate} := Str(@thisDiagResult->{PostingDate},"yyyy-MM-dd HH:mm");
+                    @DiagRes->{PostingDate} := Str(@thisDiagResult->{PostingDate},"yyyy-MM-dd");
                     @DiagRes->{MedServiceCode} := @thisDiagResult ->{Research / Code};
+                    @DiagRes->{MedServiceName} := @thisDiagResult ->{Research / Name};
                     @DiagRes->{Post} := @thisDiagResult ->{Post / DisplayName};
                     @DiagRes->{LpuName} := @thisDiagResult ->{ResearchLpu / Name};
                     
