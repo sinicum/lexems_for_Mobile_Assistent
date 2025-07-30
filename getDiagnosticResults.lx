@@ -10,8 +10,8 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
         @DiagResList := new MP.DIAG_RESULTS_LIST();
 
 
-        if (RegularExpression("^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$", @patID) > 0) 
-        begin()
+        // if (RegularExpression("^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$", @patID) > 0) 
+        // begin()
 
             if(@patID<>Null() and @patID<>"") 
             begin()
@@ -65,13 +65,13 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                     //             ;
                     // if (@selCardNote<>Null()) @EmdrID:= @selCardNote[0][0];
                     // if (@selCardNote<>Null()) @EmdrDate:= @selCardNote[0][1];
-                    @qrCardNote := query top 1 {ActualRemdEmdrMessage / EmdrID}, {ActualRemdEmdrMessage / RegistrationDate}
-                                from "AKUZ.CARD_NOTE" 
-                                where {AmbulanceCardRecord / MedicalRecordID} = @drID
-                                    and {ActualRemdEmdrMessage / RegistrationState} = 3 // статус зарегистрирован
-                                ;
-                    if (@qrCardNote->Count()>0) @EmdrID:= @qrCardNote[0]-> {ActualRemdEmdrMessage / EmdrID};
-                    if (@qrCardNote->Count()>0) @EmdrDate:= @qrCardNote[0] -> {ActualRemdEmdrMessage / RegistrationDate};                    
+                    // @qrCardNote := query top 1 {ActualRemdEmdrMessage / EmdrID}, {ActualRemdEmdrMessage / RegistrationDate}
+                    //             from "AKUZ.CARD_NOTE" 
+                    //             where {AmbulanceCardRecord / MedicalRecordID} = @drID
+                    //                 and {ActualRemdEmdrMessage / RegistrationState} = 3 // статус зарегистрирован
+                    //             ;
+                    // if (@qrCardNote->Count()>0) @EmdrID:= @qrCardNote[0]-> {ActualRemdEmdrMessage / EmdrID};
+                    // if (@qrCardNote->Count()>0) @EmdrDate:= @qrCardNote[0] -> {ActualRemdEmdrMessage / RegistrationDate};                    
 
                     @DiagRes->{DiagResultID} := @drID;
                     if(@EmdrID<>Null()) @DiagRes->{EmdrID} := @EmdrID;
@@ -80,11 +80,8 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                     @DiagRes->{MedServiceName} := @thisDiagResult ->{Research / Name};
                     @DiagRes->{Post} := @thisDiagResult ->{Post / DisplayName};
                     @DiagRes->{LpuName} := @thisDiagResult ->{ResearchLpu / Name};
-                    
-
 
                     @DiagResList->{DainosticsResults} -> Add(@DiagRes);  
-                    //@DiagResList->{error} := Str(@DiagRes,"Json");
 
                 end
                 else
@@ -97,11 +94,11 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                 @status:=206;
                 @DiagResList->{error} := "Не указан параметр patId";
             end;
-        end else
-        begin()
-            @status:=206;
-            @DiagResList->{error} := "Параметр patId имеет неверный формат";
-        end;
+        // end else
+        // begin()
+        //     @status:=206;
+        //     @DiagResList->{error} := "Параметр patId имеет неверный формат";
+        // end;
 
         //@DiagResList->{error} := @qrEmergEvent->Count();
         
