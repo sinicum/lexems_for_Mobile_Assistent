@@ -17,7 +17,7 @@ begin(qrET,ExamTypes,EType,ETypeBundle)
     //                    "Required":"Обязательный/Дополнительный"                                  // Обязательность               // {Condition} Условие на выполнение
     //                    "Type":"Специальность/Услуга"                                             // Тип                          // {Type} Тип
     //                    "MedicalServiceCode": "B04.010.002",                                      // Код услуги                   // {MedicalService / Code};
-    //                    "MedicalServiceName": "Осмотр фельдшером (акушеркой) или врачом акушером",// Наименрование услуги     // {MedicalService / Name};
+    //                    "MedicalServiceName": "Осмотр фельдшером (акушеркой) или врачом акушером",// Наименрование услуги         // {MedicalService / Name};
     //                    "SpecialityName": "Акушер-гинеколог"                                      // Специальность                // {Speciality / Name}
     //                },
     //                {}
@@ -52,8 +52,8 @@ begin(qrET,ExamTypes,EType,ETypeBundle)
             @ETypeBundle := new MP.EXAM_TYPE_BUNDLE();
             @ETypeBundle -> {AgeGroupName} := @Bun->{AgeGroup / Name};
             @ETypeBundle -> {AgeGroupCriteria} := @Bun->{AgeGroup / Criteria};
-            @ETypeBundle -> {Required} := @Bun->Str({BundleMedicalExaminations / Condition}); 
-            @ETypeBundle -> {Type} := @Bun->Str({BundleMedicalExaminations / Type}); 
+            @ETypeBundle -> {Required} := @Bun->Str({Condition}); 
+            @ETypeBundle -> {Type} := @Bun->Str({Type}); 
             @ETypeBundle -> {MedicalServiceCode} := @Bun->{MedicalService / Code};
             @ETypeBundle -> {MedicalServiceName} := @Bun->{MedicalService / Name};
             @ETypeBundle -> {SpecialityName} := @Bun->{Speciality / Name};
