@@ -1,100 +1,15 @@
 // Действие - Лексема Забирает Жалобы
-begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,err,data)
+begin(obj)
 {{AmbulanceCard / Patient / PatientID}
 ,{EventID}
 ,{AmbulanceCard / CardLpu / LpuID}}
 
-    declare MP.POST_EVENTID(
-            patId:string
-            ,eventId:string
-            ,dateTime:DateTime
-            ,MO_id:string
-        );
 
-    declare MP.COMPLAINT_RESPONSE(
-            patId:string
-            ,complaints:string
-        );
-
-    // отрабатывает:
-    //curl -v -H "Content-Type: application/json; charset=utf-8" -H "Host: gist-test-rmis.ezdrav.ru:8899" -d "{\"patID\":\"5a62519c-e9d7-4e3e-b1d9-d89af8e57f4e\",\"eventID\":\"86a671b0-75fa-4ca5-af33-6813387adc6f\",\"dateTime\":\"2025-07-25T16:38:30\",\"MO_id\":\"585a2851-e999-40a6-8979-79aecbfc2e89\"}" https://gist-test-rmis.ezdrav.ru:8899/MP_API/hospComplaint 
-    
-    // {
-    //     "patID": "5a62519c-e9d7-4e3e-b1d9-d89af8e57f4e",
-    //     "eventID": "86a671b0-75fa-4ca5-af33-6813387adc6f",
-    //     "dateTime": "2025-07-25T16:38:30",
-    //     "MO_id": "585a2851-e999-40a6-8979-79aecbfc2e89"
-    // }
 
     @obj := {.};        // 86a671b0-75fa-4ca5-af33-6813387adc6f
     
-    
-    @body := new MP.POST_EVENTID();
-    @body -> {patId} := "5a62519c-e9d7-4e3e-b1d9-d89af8e57f4e";// @obj->{AmbulanceCard / Patient / PatientID};    
-    // @body -> {eventID}:= @obj->{EventID};
-    // @body -> {dateTime} := Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm:ss");
-    // @body -> {MO_id} := @obj->{AmbulanceCard / CardLpu / LpuID} ;
+    @p := new Process("GetComplaintFromMedAssistProcess",@obj);
+    @po := @p -> Run();
 
-    @headers:= new Hashtable();
-    @headers["Content-Type"]:="application/json; charset=utf-8"; 
-
-    // @address:="https://medapi.miwory.ru/v1/vitacore/hospComplaint"; 
-    @address:="https://gist-test-rmis.ezdrav.ru:8899/MP_API/hospComplaint";
-
-    ////////////////////////----- сохранение запроса в RABBIT_SEND_OBJECT ----////////////////////////
-    @json:=Replace(Str(@body,"Json"),"\"flags_\":\"1\",","");
-    //$throw(@json);
-
-    @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
-    @rso -> {QueueName}:=@address;
-    @rso -> {Content}:=@json;
-    @rso -> {RoutingKey}:="";
-    @rso -> {Type}:="TEST_COMPLAINT_REQUEST";
-    @rso -> {State}:=1;
-    @rso -> {ContentEncoding}:="utf-8";
-    @rso -> {CreateDateTime}:= param(CURRENT_DATE_TIME);
-    @rso -> Save();
-    ////////////////////////////////////////////////////////
-
-    // try
-    // begin()
-
-    @response := $Send POST Request to @address with headers @headers data @body {patId};
-            // ,{eventId}
-            // ,{dateTime}
-            // ,{MO_id}
-
-        @result:=$Expect unsafe "MP.COMPLAINT_RESPONSE" From @response inbody as json;
-        //////////////////////////////////////////////////////////////////////////
-
-        @statusCode:= @result["Response"]->{StatusCode}; // 200 - Работает
-        @json2 := str(@result["Body"],"Json"); // весь ответ в строке в json
-
-        @owner.DoRefresh();
-        
-        // @obj := {IncomingComplaints} := 
-        $throw(@json2);
-        // @result["Body"] -> {Complaints});
-        
-
-    // end
-    // catch(ex)
-    // begin()
-    //     @json2 := @ex -> {InnerException};
-    //     @err :=  @ex -> {InnerException};
-    //     return(@err);
-    //     $throw(@json2);
-    // end;
-
-    // @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
-    // @rso -> {QueueName}:=@address;
-    // @rso -> {Content}:=@json2;
-    // @rso -> {RoutingKey}:="";
-    // @rso -> {Type}:="TEST_COMPLAINT_REQUEST";
-    // @rso -> {State}:=1;
-    // @rso -> {ContentEncoding}:="utf-8";
-    // @rso -> {CreateDateTime}:= param(CURRENT_DATE_TIME);
-    // @rso -> Save();
-    ////////////////////////////////////////////////////////
-    
+    ////////////    
 end;
