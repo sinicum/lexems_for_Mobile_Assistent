@@ -12,7 +12,7 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
         );
 
     declare MP.COMPLAINT_RESPONSE(
-            patID:string
+            patId:string
             ,complaints:string
         );
 
@@ -28,8 +28,9 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
 
     @obj := {.};        // 86a671b0-75fa-4ca5-af33-6813387adc6f
     
+    
     @body := new MP.POST_EVENTID();
-    @body -> {patId} := @obj->{AmbulanceCard / Patient / PatientID};    
+    @body -> {patId} := "5a62519c-e9d7-4e3e-b1d9-d89af8e57f4e";// @obj->{AmbulanceCard / Patient / PatientID};    
     // @body -> {eventID}:= @obj->{EventID};
     // @body -> {dateTime} := Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm:ss");
     // @body -> {MO_id} := @obj->{AmbulanceCard / CardLpu / LpuID} ;
@@ -58,8 +59,8 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
     // try
     // begin()
 
-        @response := $Send POST Request to @address with headers @headers data @body {patID};
-            // ,{eventID}
+    @response := $Send POST Request to @address with headers @headers data @body {patId};
+            // ,{eventId}
             // ,{dateTime}
             // ,{MO_id}
 
@@ -89,7 +90,7 @@ begin(obj,body,rso,headers,address,response,result,statusCode,status,json,json2,
     // @rso -> {QueueName}:=@address;
     // @rso -> {Content}:=@json2;
     // @rso -> {RoutingKey}:="";
-    // @rso -> {Type}:="AIST_EVENTS_GET_RESPONSE";
+    // @rso -> {Type}:="TEST_COMPLAINT_REQUEST";
     // @rso -> {State}:=1;
     // @rso -> {ContentEncoding}:="utf-8";
     // @rso -> {CreateDateTime}:= param(CURRENT_DATE_TIME);
