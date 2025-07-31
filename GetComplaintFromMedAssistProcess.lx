@@ -1,5 +1,5 @@
 // Процесс GetComplaintFromMedAssistProcess - лексема Забирает Жалобы 
-begin(obj2, body, headers, address, json, rso, response,result,statusCode,status,,json2,err,data)
+begin(objProc, body, headers, address, json, rso, response,result,statusCode,status,jsonIN,err,data)
 
 
     declare MP.POST_EVENTID(
@@ -27,14 +27,14 @@ begin(obj2, body, headers, address, json, rso, response,result,statusCode,status
     // }
 
     
-    @obj2 := @process->{Object};
+    @objProc := @process->{Object};
     //@oid_department := @process->{Parameters}["oid_department"];
 
     @body := new MP.POST_EVENTID();
-    @body -> {patId} := @obj->{AmbulanceCard / Patient / PatientID};    
-    @body -> {eventId}:= @obj->{EventID};
+    @body -> {patId} := @objProc->{AmbulanceCard / Patient / PatientID};
+    @body -> {eventId}:= @objProc->{EventID};
     @body -> {dateTime} := Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm:ss");
-    @body -> {MO_id} := @obj->{AmbulanceCard / CardLpu / LpuID} ;
+    @body -> {MO_id} := @objProc->{AmbulanceCard / CardLpu / LpuID} ;
 
     @headers:= new Hashtable();
     @headers["Content-Type"]:="application/json; charset=utf-8"; 
@@ -60,7 +60,7 @@ begin(obj2, body, headers, address, json, rso, response,result,statusCode,status
     // try
     // begin()
 
-        // отрабатывает:
+        // CURL пример отрабатывает:
         //curl -v -H "Content-Type: application/json; charset=utf-8" -H "Host: gist-test-rmis.ezdrav.ru:8899" -d "{\"patID\":\"5a62519c-e9d7-4e3e-b1d9-d89af8e57f4e\",\"eventID\":\"86a671b0-75fa-4ca5-af33-6813387adc6f\",\"dateTime\":\"2025-07-25T16:38:30\",\"MO_id\":\"585a2851-e999-40a6-8979-79aecbfc2e89\"}" https://gist-test-rmis.ezdrav.ru:8899/MP_API/hospComplaint 
 
         @response := $Send POST Request to @address with headers @headers data @body {patId}
@@ -72,28 +72,30 @@ begin(obj2, body, headers, address, json, rso, response,result,statusCode,status
         //////////////////////////////////////////////////////////////////////////
 
         @statusCode:= @result["Response"]->{StatusCode}; // 200 - Работает
-        @json2 := Replace(str(@result["Body"],"Json"),"\"flags_\":\"1\",",""); // весь ответ в строке в json
+        @jsonIN := Replace(str(@result["Body"],"Json"),"\"flags_\":\"1\",",""); // весь ответ в строке в json
 
-        @obj := {IncomingComplaints} := @result["Body"] -> {complaints};
-        // @obj -> Save();
-        //@owner.DoRefresh();
 
-        //$throw(@json2);
+
+        // отправляем обратно
+        @processOutput["complaints"] :=  @result["Body"] -> {complaints};
+
+
+        //$throw(@jsonIN);
         // 
         
 
     // end
     // catch(ex)
     // begin()
-    //     @json2 := @ex -> {InnerException};
+    //     @jsonIN := @ex -> {InnerException};
     //     @err :=  @ex -> {InnerException};
     //     return(@err);
-    //     $throw(@json2);
+    //     $throw(@jsonIN);
     // end;
 
     @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
     @rso -> {QueueName}:=@address;
-    @rso -> {Content}:=@json2;
+    @rso -> {Content}:=@jsonIN;
     @rso -> {RoutingKey}:="";
     @rso -> {Type}:="TEST_COMPLAINT_RESPONSE";
     @rso -> {State}:=1;
