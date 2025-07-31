@@ -22,9 +22,9 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                                         ,{PostingDate}
                                         ,{Research / Code}
                                         ,{Research / Name}
-                                        ,{Post / Worker/FIO}
-                                        ,{Post / Speciality/Name}
-                                        ,{ResearchLpu / Name}
+                                        // ,{Post / Worker/FIO}
+                                        // ,{Post / Speciality/Name}
+                                        // ,{ResearchLpu / Name}
 
                                         //,{CardNotes}
 
@@ -78,8 +78,8 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                     @DiagRes->{PostingDate} := Str(@thisDiagResult->{PostingDate},"yyyy-MM-dd");
                     @DiagRes->{MedServiceCode} := @thisDiagResult ->{Research / Code};
                     @DiagRes->{MedServiceName} := @thisDiagResult ->{Research / Name};
-                    @DiagRes->{Post} := @thisDiagResult ->{Post / DisplayName};
-                    @DiagRes->{LpuName} := @thisDiagResult ->{ResearchLpu / Name};
+                    // @DiagRes->{Post} := @thisDiagResult ->{Post / DisplayName};
+                    // @DiagRes->{LpuName} := @thisDiagResult ->{ResearchLpu / Name};
 
                     @DiagResList->{DainosticsResults} -> Add(@DiagRes);  
 
