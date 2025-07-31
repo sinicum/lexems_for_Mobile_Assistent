@@ -2,14 +2,26 @@
 begin(obj)
 {{AmbulanceCard / Patient / PatientID}
 ,{EventID}
-,{AmbulanceCard / CardLpu / LpuID}}
+,{AmbulanceCard / CardLpu / LpuID}
+,{IncomingComplaints}}
 
 
 
     @obj := {.};        // 86a671b0-75fa-4ca5-af33-6813387adc6f
+    // @obj := query {AmbulanceCard / Patient / PatientID}
+    //                 ,{EventID}
+    //                 ,{AmbulanceCard / CardLpu / LpuID}
+    //         from "AKUZ.EMERGENCY_EVENT" 
+    //         where {EventID} = "86a671b0-75fa-4ca5-af33-6813387adc6f";
     
     @p := new Process("GetComplaintFromMedAssistProcess",@obj);
     @po := @p -> Run();
 
     ////////////    
+    
+    @statusCode:= @po["statusCode"];
+    @obj := {IncomingComplaints} := @po["complaints"];
+    //@obj -> Save();
+    @owner.DoRefresh();
+
 end;
