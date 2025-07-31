@@ -20,11 +20,6 @@ begin(patID, InfoList, qrEmergEvent ,status)
     //            "SpecialityCode": "013",
     //            "SpecialityName": "Кардиолог"
     //        }
-    //    ],
-    //    "Recomendations": [
-    //        {
-    //            "Recomendation": "рекомендации тест"
-    //        }
     //    ]
     //}
     
