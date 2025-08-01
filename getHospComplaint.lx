@@ -1,5 +1,5 @@
 // Действие - Лексема Забирает Жалобы
-begin(obj)
+begin(obj, p, po, statusCode)
 {{AmbulanceCard / Patient / PatientID}
 ,{EventID}
 ,{AmbulanceCard / CardLpu / LpuID}
@@ -20,8 +20,12 @@ begin(obj)
     ////////////    
     
     @statusCode:= @po["statusCode"];
-    @obj := {IncomingComplaints} := @po["complaints"];
-    //@obj -> Save();
+    // if(@po["err"]<>Null()) 
+    //     $throw new ClientException(@po["err"],"Ошибка");
+
+
+    @obj -> {IncomingComplaints} := @po["complaints"];
+    @obj -> Save();
     @owner.DoRefresh();
 
 end;
