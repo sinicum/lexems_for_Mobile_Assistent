@@ -1,12 +1,12 @@
 // Процесс GetComplaintFromMedAssistProcess - лексема Забирает Жалобы 
-begin(objProc, body, headers, address, json, rso, response,result,statusCode,status,jsonIN,err,data)
+begin(objProc, body, headers, address, json, rso, response,result,statusCode,status,jsonIN,err)
 
 
     declare MP.POST_EVENTID(
-            patId:string
-            ,eventId:string
-            ,dateTime:DateTime
-            ,MO_id:string
+        patId:string
+        ,eventId:string
+        ,dateTime:DateTime
+        ,MO_id:string
         );
     // --------- ЗАПРОС
     // {
@@ -19,21 +19,22 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
     declare MP.COMPLAINT_RESPONSE(
         patId:string
         ,complaints:string
-    );
+        );
     //--------- ОТВЕТНЫЙ ЗАПРОС
     // {
     //     "patId": "5a62519c-e9d7-4e3e-b1d9-d89af8e57f4e",
     //     "complaints": "86a671b0-75fa-4ca5-af33-6813387adc6f"
     // }
 
-    
+    // получаем объект с клиента
     @objProc := @process->{Object};
     //@oid_department := @process->{Parameters}["oid_department"];
 
     @body := new MP.POST_EVENTID();
+
     @body -> {patId} := @objProc->{AmbulanceCard / Patient / PatientID};
     @body -> {eventId}:= @objProc->{EventID};
-    @body -> {dateTime} := Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm:ss");
+    @body -> {dateTime} := param(CURRENT_DATE_TIME); //Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm:ss");
     @body -> {MO_id} := @objProc->{AmbulanceCard / CardLpu / LpuID} ;
 
     @headers:= new Hashtable();
@@ -42,13 +43,13 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
     // @address:="https://medapi.miwory.ru/v1/vitacore/hospComplaint"; 
     @address:="https://gist-test-rmis.ezdrav.ru:8899/MP_API/hospComplaint";
 
-    ////////////////////////----- сохранение запроса в RABBIT_SEND_OBJECT ----////////////////////////
+    //////----- сохранение запроса в RABBIT_SEND_OBJECT ----///////
     @json:=Replace(Str(@body,"Json"),"\"flags_\":\"1\",","");
     //$throw(@json);
 
     @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
-    @rso -> {QueueName}:=@address;
-    @rso -> {Content}:=@json;
+    @rso -> {QueueName}:= @address;
+    @rso -> {Content}:= @json;
     @rso -> {RoutingKey}:="";
     @rso -> {Type}:="TEST_COMPLAINT_REQUEST";
     @rso -> {State}:=1;
@@ -57,8 +58,8 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
     @rso -> Save();
     ////////////////////////////////////////////////////////
 
-    // try
-    // begin()
+    try
+    begin() ////---- Отправка запроса 
 
         // CURL пример отрабатывает:
         //curl -v -H "Content-Type: application/json; charset=utf-8" -H "Host: gist-test-rmis.ezdrav.ru:8899" -d "{\"patID\":\"5a62519c-e9d7-4e3e-b1d9-d89af8e57f4e\",\"eventID\":\"86a671b0-75fa-4ca5-af33-6813387adc6f\",\"dateTime\":\"2025-07-25T16:38:30\",\"MO_id\":\"585a2851-e999-40a6-8979-79aecbfc2e89\"}" https://gist-test-rmis.ezdrav.ru:8899/MP_API/hospComplaint 
@@ -74,34 +75,30 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
         @statusCode:= @result["Response"]->{StatusCode}; // 200 - Работает
         @jsonIN := Replace(str(@result["Body"],"Json"),"\"flags_\":\"1\",",""); // весь ответ в строке в json
 
+    end
+    catch(ex)
+    begin()
+        @jsonIN := @ex -> {InnerException};
+        @err :=  @ex -> {InnerException};
+        // return(@err);
+        // $throw(@jsonIN);
+    end;
+
+    // отправляем обратно на клиент
+    @processOutput["complaints"] :=  @result["Body"] -> {complaints};
+    @processOutput["err"] := @err;
 
 
-        // отправляем обратно
-        @processOutput["complaints"] :=  @result["Body"] -> {complaints};
-
-
-        //$throw(@jsonIN);
-        // 
-        
-
-    // end
-    // catch(ex)
-    // begin()
-    //     @jsonIN := @ex -> {InnerException};
-    //     @err :=  @ex -> {InnerException};
-    //     return(@err);
-    //     $throw(@jsonIN);
-    // end;
-
+    ///////----- сохранение ответа (или ошибки) в RABBIT_SEND_OBJECT ----/////
     @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
     @rso -> {QueueName}:=@address;
     @rso -> {Content}:=@jsonIN;
-    @rso -> {RoutingKey}:="";
+    @rso -> {RoutingKey}:=IsNull(@statusCode,"Error");
     @rso -> {Type}:="TEST_COMPLAINT_RESPONSE";
     @rso -> {State}:=1;
     @rso -> {ContentEncoding}:="utf-8";
     @rso -> {CreateDateTime}:= param(CURRENT_DATE_TIME);
     @rso -> Save();
-    //////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////
     
 end;
