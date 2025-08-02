@@ -24,7 +24,6 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
         begin()
             @qrEmergEvent := query top 1 {EventID}
                                         ,{MedicalExaminations / Recomendations}
-                                        ,
                                         ,{EpicrissCollection / Recomendation}
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID and {CloseDate} = Null()
