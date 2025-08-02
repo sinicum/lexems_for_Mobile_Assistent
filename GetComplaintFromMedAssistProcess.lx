@@ -75,6 +75,9 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
         @statusCode:= @result["Response"]->{StatusCode}; // 200 - Работает
         @jsonIN := Replace(str(@result["Body"],"Json"),"\"flags_\":\"1\",",""); // весь ответ в строке в json
 
+        // отправляем обратно на клиент ответ
+        @processOutput["complaints"] :=  @result["Body"] -> {complaints};
+
     end
     catch(ex)
     begin()
@@ -82,12 +85,10 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
         @err :=  @ex -> {InnerException};
         // return(@err);
         // $throw(@jsonIN);
+        // отправляем обратно на клиент
+        @processOutput["err"] := @err;
     end;
-
-    // отправляем обратно на клиент
-    @processOutput["complaints"] :=  @result["Body"] -> {complaints};
-    @processOutput["err"] := @err;
-
+    
 
     ///////----- сохранение ответа (или ошибки) в RABBIT_SEND_OBJECT ----/////
     @rso:=new AKUZ.RABBIT_SEND_OBJECT(new Apartment());
