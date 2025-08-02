@@ -1,0 +1,72 @@
+// Рекомендации по текущей госпитализации. Медтод /getRecommendations
+begin(patID, HospRecommsList, qrEmergEvent ,status)
+
+    //declare MP.INFO_LIST(RoutesToDiagnostic:MP.ROUTE_TO_DIAGNOSTIC[Collection4],RoutesToDoctor:MP.ROUTE_TO_DOCTOR[Collection5],Recomendations:MP.RECOM[Collection6],error:string); 
+    //declare MP.ROUTE_TO_DIAGNOSTIC(Collection4:MP.INFO_LIST,RouteDate:string,ResearchCode:string,ResearchName:string);
+    //declare MP.ROUTE_TO_DOCTOR(Collection5:MP.INFO_LIST,RouteDate:string,SpecialityCode:string,SpecialityName:string);
+    //declare MP.RECOM(Collection6:MP.INFO_LIST,Recomendation:string);
+
+    //{
+    //    "Recommendations": [
+    //        {
+    //            "Recommendation": "рекомендации тест"
+    //        }
+    //    ]
+    //}
+    
+    @status := 200;
+    @HospRecommsList := new MP.HOSP_RECOMMS_LIST();
+    @patID := TryCast(@querystring["patId"], "Guid");
+    //@patID :="b708e782-4f83-4f3b-8639-512c0c9637bf"; //выписан
+    //@patID :="3092e1c5-e08b-4654-a027-82be90fe8a49";
+    if (str(@patID)<>"")
+    begin()
+        @qrEmergEvent := query top 1 {EventID}
+                                    ,{MedicalExaminations / Recomendations}
+                                    ,
+                                    ,{EpicrissCollection / Recomendation}
+                    from "AKUZ.EMERGENCY_EVENT" 
+                    where {AmbulanceCard / Patient / PatientID} = @patID and {CloseDate} = Null()
+                    order by {CreationDateTime} desc
+                    ;
+        if (@qrEmergEvent -> Count()>0)
+        begin(EventID)
+            @EventID := @qrEmergEvent[0] -> {EventID};
+            @HospRecommsList -> {EventID} := @qrEmergEvent[0] -> {EventID};
+            @HospRecommsList -> {EventDate} := Str(@qrEmergEvent[0] -> {EventDate},"yyyy-MM-dd");
+
+            //Рекомендации из Осмотров
+            foreach(thisqrEmergEvent in @qrEmergEvent)
+            begin()
+                foreach(ME in @thisqrEmergEvent->{MedicalExaminations})
+                if (str(@ME -> {Recommendations})<>"")
+                begin(Recom)
+                    @Recom := new MP.RECOM();
+                    @Recom -> {Type} := "Осмотр";
+                    @Recom -> {Date} := str();
+                    @Recom -> {Recomendation} := str(@ME -> {Recomendations});
+                    @HospRecommsList -> {Recommendations} -> Add(@Recom);
+                end;
+            end;
+
+            //Рекомендации из Эпикризов
+
+        end                   
+        else
+        begin()
+            @HospRecommsList -> {error} := "Пациент не госпитализирован!";
+            @status := 206;
+        end;
+    end
+    else
+    begin()
+        @HospRecommsList -> {error} := "Идентификатор пациента указан неверно";
+        @status := 206;        
+    end;
+    
+    @HospRecommsList := Replace(Str(@HospRecommsList,"Json"),"\"flags_\":\"1\",","");
+    // print(@HospRecommsList);
+    return(@HospRecommsList);
+
+    @response.StatusCode:=@status;
+end;
