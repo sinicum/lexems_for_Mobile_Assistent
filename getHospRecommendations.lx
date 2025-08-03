@@ -6,13 +6,15 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
     //declare MP.ROUTE_TO_DOCTOR(Collection5:MP.INFO_LIST,RouteDate:string,SpecialityCode:string,SpecialityName:string);
     //declare MP.RECOM(Collection6:MP.INFO_LIST,Recomendation:string);
 
-    //{
-    //    "Recommendations": [
-    //        {
-    //            "Recommendation": "рекомендации тест"
-    //        }
-    //    ]
-    //}
+    // {
+    //     "EventID": "b8227793-0f40-40f0-b8aa-9fc00cc13b96",
+    //     "EventDate": "2025-07-21"
+    //     "Recommendations": [
+    //         {
+    //             "Recommendation": "рекомендации тест"
+    //         }
+    //     ]
+    // }
     try
     begin()
         @status := 200;
@@ -22,12 +24,14 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
         //@patID :="3092e1c5-e08b-4654-a027-82be90fe8a49";
         if (str(@patID)<>"")
         begin()
-            @qrEmergEvent := query top 1 {EventID}
+            @qrEmergEvent := query top 1 {EventID},{EventDate}
                                         ,{MedicalExaminations / Recomendations}
+                                        ,{MedicalExaminations / ExaminationDate}
+                                        ,{MedicalExaminations / ExaminationTime}
                                         ,{EpicrissCollection / Recomendation}
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID and {CloseDate} = Null()
-                            and {MedicalExaminations / Recomendations} <> Null() or {EpicrissCollection / Recomendation} <> Null()
+                            //and {MedicalExaminations / Recomendations} <> Null() or {EpicrissCollection / Recomendation} <> Null()
                         order by {CreationDateTime} desc
                         ;
             if (@qrEmergEvent -> Count()>0)
@@ -44,7 +48,7 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
                     begin(Recom)
                         @Recom := new MP.RECOM();
                         @Recom -> {Type} := "Осмотр";
-                        @Recom -> {Date} := str();
+                        @Recom -> {DateTime} := str(Cast(Str(@ME->{MedicalExaminations / ExaminationDate},"yyyy-MM-dd")+ " "+ Str(@ME->{MedicalExaminations / ExaminationTime},"HH:mm:ss"), "DateTime"));
                         @Recom -> {Recommendation} := str(@ME -> {Recomendations});
                         @HospRecommsList -> {Recommendations} -> Add(@Recom);
                     end;
@@ -80,3 +84,4 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
         return(@HospRecommsList);
 
     end;
+end;
