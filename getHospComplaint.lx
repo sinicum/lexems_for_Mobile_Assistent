@@ -20,8 +20,8 @@ begin(obj, p, po, statusCode)
     ////////////    
     
     @statusCode:= @po["statusCode"];
-    // if(@po["err"]<>Null()) 
-    //     $throw new ClientException(@po["err"],"Ошибка");
+    if(@po["err"]<>Null()) 
+        $throw new ClientException(Str(@po["err"]),"Ошибка");
 
 
     @obj -> {IncomingComplaints} := @po["complaints"];
