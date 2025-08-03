@@ -18,20 +18,18 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
     try
     begin()
         @status := 200;
-        @HospExamsList := new MP.HOSP_RECOMMS_LIST();
+        @HospExamsList := new MP.HOSP_EXAMS_LIST();
         @patID := TryCast(@querystring["patId"], "Guid");
-        //@patID :="b708e782-4f83-4f3b-8639-512c0c9637bf"; //выписан
-        //@patID :="3092e1c5-e08b-4654-a027-82be90fe8a49";
+
         if (str(@patID)<>"")
         begin()
             @qrEmergEvent := query top 1 {EventID},{EventDate}
                                         ,{MedicalExaminations / Recomendations}
                                         ,{MedicalExaminations / ExaminationDate}
                                         ,{MedicalExaminations / ExaminationTime}
-                                        ,{EpicrissCollection / Recomendation}
+
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID and {CloseDate} = Null()
-                            //and {MedicalExaminations / Recomendations} <> Null() or {EpicrissCollection / Recomendation} <> Null()
                         order by {CreationDateTime} desc
                         ;
             if (@qrEmergEvent -> Count()>0)
@@ -44,9 +42,9 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                 foreach(thisqrEmergEvent in @qrEmergEvent)
                 begin()
                     foreach(ME in @thisqrEmergEvent->{MedicalExaminations})
-                    if (str(@ME -> {Recomendations})<>"")
+                    // if (str(@ME -> {Recomendations})<>"")
                     begin(Recom)
-                        @Recom := new MP.RECOM();
+                        @Recom := new MP.EXAMINATION();
                         @Recom -> {Type} := "Осмотр";
                         @Recom -> {DateTime} := str(Cast(Str(@ME->{MedicalExaminations / ExaminationDate},"yyyy-MM-dd")+ " "+ Str(@ME->{MedicalExaminations / ExaminationTime},"HH:mm:ss"), "DateTime"));
                         @Recom -> {Recommendation} := str(@ME -> {Recomendations});
@@ -54,7 +52,7 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                     end;
                 end;
 
-                //Рекомендации из Эпикризов
+
 
             end                   
             else
