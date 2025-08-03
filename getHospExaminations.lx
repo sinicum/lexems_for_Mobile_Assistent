@@ -1,4 +1,4 @@
-// Посещения врачей по текущей госпитализации. Медтод /getHospExams
+// Посещения врачей по текущей госпитализации. Медтод /getHospExaminations
 begin(patID, HospExamsList, qrEmergEvent ,status)
 
     //declare MP.INFO_LIST(RoutesToDiagnostic:MP.ROUTE_TO_DIAGNOSTIC[Collection4],RoutesToDoctor:MP.ROUTE_TO_DOCTOR[Collection5],Recomendations:MP.RECOM[Collection6],error:string); 
