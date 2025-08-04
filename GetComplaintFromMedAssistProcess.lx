@@ -34,7 +34,7 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
 
     @body -> {patId} := @objProc->{AmbulanceCard / Patient / PatientID};
     @body -> {eventId}:= @objProc->{EventID};
-    @body -> {dateTime} := param(CURRENT_DATE_TIME); //Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm:ss");
+    @body -> {dateTime} := Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm:ss"); // param(CURRENT_DATE_TIME); //
     @body -> {MO_id} := @objProc->{AmbulanceCard / CardLpu / LpuID} ;
 
     @headers:= new Hashtable();
