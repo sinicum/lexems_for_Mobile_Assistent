@@ -1,17 +1,14 @@
-// Посещения врачей по текущей госпитализации. Медтод /getHospExaminations
+// Осмотры врачей по текущей госпитализации. Медтод /getHospExaminations
 begin(patID, HospExamsList, qrEmergEvent ,status)
 
-    //declare MP.INFO_LIST(RoutesToDiagnostic:MP.ROUTE_TO_DIAGNOSTIC[Collection4],RoutesToDoctor:MP.ROUTE_TO_DOCTOR[Collection5],Recomendations:MP.RECOM[Collection6],error:string); 
-    //declare MP.ROUTE_TO_DIAGNOSTIC(Collection4:MP.INFO_LIST,RouteDate:string,ResearchCode:string,ResearchName:string);
-    //declare MP.ROUTE_TO_DOCTOR(Collection5:MP.INFO_LIST,RouteDate:string,SpecialityCode:string,SpecialityName:string);
-    //declare MP.RECOM(Collection6:MP.INFO_LIST,Recomendation:string);
 
     // {
     //     "EventID": "b8227793-0f40-40f0-b8aa-9fc00cc13b96",
     //     "EventDate": "2025-07-21"
     //     "Exams": [
     //         {
-    //             "Recommendation": "рекомендации тест"
+    //             "DateTime":
+    //             "ExaminationText": "рекомендации тест"
     //         }
     //     ]
     // }
@@ -38,23 +35,30 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                 @HospExamsList -> {EventID} := @qrEmergEvent[0] -> {EventID};
                 @HospExamsList -> {EventDate} := Str(@qrEmergEvent[0] -> {EventDate},"yyyy-MM-dd");
 
-                //Рекомендации из Осмотров
                 foreach(thisqrEmergEvent in @qrEmergEvent)
                 begin()
+
                     foreach(ME in @thisqrEmergEvent->{MedicalExaminations})
-                    // if (str(@ME -> {Recomendations})<>"")
-                    begin(Recom)
-                        @Recom := new MP.EXAMINATION();
-                        @Recom -> {Type} := "Осмотр";
-                        @Recom -> {DateTime} := str(Cast(Str(@ME->{MedicalExaminations / ExaminationDate},"yyyy-MM-dd")+ " "+ Str(@ME->{MedicalExaminations / ExaminationTime},"HH:mm:ss"), "DateTime"));
-                        @Recom -> {Recommendation} := str(@ME -> {Recomendations});
-                        @HospExamsList -> {Recommendations} -> Add(@Recom);
+                    //if(ChildExists({CardNotes}, {ObjectProperties / ObjectType} = 228))
+                    begin(Exam)
+                        @Exam := new MP.EXAMINATION();
+
+                        @Exam -> {DateTime} := str(Cast(Str(@ME->{ExaminationDate},"yyyy-MM-dd")+ " "+ Str(@ME->{ExaminationTime},"HH:mm:ss"), "DateTime"));
+                        @Exam -> {ExaminationText} := str(@ME -> {Examination});
+                        @Exam -> {Recommendation} := str(@ME -> {Recomendations});
+                        foreach(CN in @ME->{CardNotes})
+                        if({ObjectProperties / ObjectType} = 228)
+                        begin()
+                            @SEMD := new MP.SEMD()
+                            @SEMD -> {SEMDContent} := @CN-> {CardNoteFile / Content};
+                            @Exam -> {CardNotes} -> Add(@SEMD);
+                        end;
+                        @HospRecommsList -> {Examinations} -> Add(@Recom);
                     end;
+
                 end;
 
-
-
-            end                   
+            end
             else
             begin()
                 @HospExamsList -> {error} := "Пациент не госпитализирован!";
