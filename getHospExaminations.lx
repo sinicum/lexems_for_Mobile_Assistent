@@ -1,14 +1,13 @@
 // Осмотры врачей по текущей госпитализации. Медтод /getHospExaminations
 begin(patID, HospExamsList, qrEmergEvent ,status)
 
-
     // {
-    //     "EventID": "b8227793-0f40-40f0-b8aa-9fc00cc13b96",
+    //     "EventID": "b708e782-4f83-4f3b-8639-512c0c9637bf",
     //     "EventDate": "2025-07-21"
     //     "Exams": [
     //         {
-    //             "DateTime":
-    //             "ExaminationText": "рекомендации тест"
+    //             "DateTime": "yyyy-MM-dd",
+    //             "ExaminationText": "string"
     //         }
     //     ]
     // }
@@ -22,8 +21,11 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
         begin()
             @qrEmergEvent := query top 1 {EventID},{EventDate}
                                         ,{MedicalExaminations / Recomendations}
+                                        ,{MedicalExaminations / Examination}
                                         ,{MedicalExaminations / ExaminationDate}
                                         ,{MedicalExaminations / ExaminationTime}
+                                        ,{CardNotes}
+                                        ,{CardNotes / CardNoteFile / Content}
 
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID and {CloseDate} = Null()
@@ -44,16 +46,18 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                         @Exam := new MP.EXAMINATION();
 
                         @Exam -> {DateTime} := str(Cast(Str(@ME->{ExaminationDate},"yyyy-MM-dd")+ " "+ Str(@ME->{ExaminationTime},"HH:mm:ss"), "DateTime"));
-                        @Exam -> {ExaminationText} := str(@ME -> {Examination});
-                        @Exam -> {Recommendation} := str(@ME -> {Recomendations});
+                        @Exam -> {ExaminationText} := HTMLToPlainText(UnPackString(@ME -> {Examination}));
+
+                        @Exam -> {Recommendation} := @ME->{CardNotes}->Count();//str(@ME -> {Recomendations});
                         foreach(CN in @ME->{CardNotes})
-                        if({ObjectProperties / ObjectType} = 228)
+                        //if({ObjectProperties / ObjectType} = 228)
                         begin()
-                            @SEMD := new MP.SEMD()
-                            @SEMD -> {SEMDContent} := @CN-> {CardNoteFile / Content};
-                            @Exam -> {CardNotes} -> Add(@SEMD);
+                            @SEMD := new MP.SEMD();
+                            @SEMD -> {SEMDContent} := "qwdqwd";//Str(@CN-> {CardNoteFile / Content},"Base64");
+                            @Exam -> {SEMDs} -> Add(@SEMD);
+                            $throw (Str(@SEMD,"Json"));
                         end;
-                        @HospRecommsList -> {Examinations} -> Add(@Recom);
+                        @HospExamsList -> {Examinations} -> Add(@Exam);
                     end;
 
                 end;
@@ -73,9 +77,11 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
         
         @HospExamsList := Replace(Str(@HospExamsList,"Json"),"\"flags_\":\"1\",","");
         // print(@HospExamsList);
+
+        @response.StatusCode:=@status;        
         return(@HospExamsList);
 
-        @response.StatusCode:=@status;
+
 
     end
     catch(ex)
