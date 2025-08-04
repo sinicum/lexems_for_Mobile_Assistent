@@ -24,8 +24,8 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                                         ,{MedicalExaminations / Examination}
                                         ,{MedicalExaminations / ExaminationDate}
                                         ,{MedicalExaminations / ExaminationTime}
-                                        ,{CardNotes}
-                                        ,{CardNotes / CardNoteFile / Content}
+                                        ,{MedicalExaminations / CardNotes}
+                                        ,{MedicalExaminations / CardNotes / CardNoteFile / Content}
 
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID and {CloseDate} = Null()
@@ -41,7 +41,7 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                 begin()
 
                     foreach(ME in @thisqrEmergEvent->{MedicalExaminations})
-                    //if(ChildExists({CardNotes}, {ObjectProperties / ObjectType} = 228))
+                    if(@ME->{CardNotes}->Count()>0) //, {ObjectProperties / ObjectType} = 228))
                     begin(Exam)
                         @Exam := new MP.EXAMINATION();
 
