@@ -53,9 +53,9 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                         //if({ObjectProperties / ObjectType} = 228)
                         begin(SEMD)
                             @SEMD := new MP.SEMD();
-                            @SEMD -> {SEMDContent} := "qwdqwd";//Str(@CN-> {CardNoteFile / Content},"Base64");
+                            @SEMD -> {SEMDContent} := Str(@CN-> {CardNoteFile / Content},"Base64");
                             @Exam -> {SEMDs} -> Add(@SEMD);
-                            $throw (Str(@SEMD,"Json"));
+                            //$throw (Str(@SEMD,"Json"));
                         end;
                         @HospExamsList -> {Examinations} -> Add(@Exam);
                     end;
