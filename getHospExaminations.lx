@@ -51,7 +51,7 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                         @Exam -> {Recommendation} := @ME->{CardNotes}->Count();//str(@ME -> {Recomendations});
                         foreach(CN in @ME->{CardNotes})
                         //if({ObjectProperties / ObjectType} = 228)
-                        begin()
+                        begin(SEMD)
                             @SEMD := new MP.SEMD();
                             @SEMD -> {SEMDContent} := "qwdqwd";//Str(@CN-> {CardNoteFile / Content},"Base64");
                             @Exam -> {SEMDs} -> Add(@SEMD);
