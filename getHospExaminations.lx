@@ -57,16 +57,16 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                         
                         foreach(CN in @ME->{CardNotes})
                         if(@CN->{ObjectProperties / ObjectType} = 228) // СЭМД 191 - Осмотр лечащим врачом
-                        begin(SEMD,zipfile,list_files,file,xml)
+                        begin(SEMD,cnfContent,zipfile,list_files,file,xml)
                             @SEMD := new MP.SEMD();
-                            // @SEMD -> {SEMDContent} := Str((@CN-> {CardNoteFile / Content}),"Base64"); // без Str() - тип System.Byte[]
+                            @SEMD -> {SEMDContent} := Str((@CN-> {CardNoteFile / Content}),"Base64"); // без Str() - тип System.Byte[]
 
-                @zipfile := new FileZip(@CN-> {CardNoteFile / Content});
-                @list_files := @zipfile.Files;
-                @file := @list_files[0];
-                @xml := @file.GetString();
-
-                @SEMD -> {SEMDContent} := @xml; 
+                            // @cnfContent := @CN-> {CardNoteFile / Content};
+                            // @zipfile := new FileZip(@cnfContent.GetStream());
+                            // @list_files := @zipfile.Files;
+                            // @file := @list_files[0];
+                            // @xml := @file.GetString();
+                            // @SEMD -> {SEMDContent} := @xml; 
 
                             @Exam -> {SEMDs} -> Add(@SEMD);
                             //$throw (Str(@SEMD,"Json"));
