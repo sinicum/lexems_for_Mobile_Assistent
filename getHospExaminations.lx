@@ -2,12 +2,18 @@
 begin(patID, HospExamsList, qrEmergEvent ,status)
 
     // {
-    //     "EventID": "b708e782-4f83-4f3b-8639-512c0c9637bf",
-    //     "EventDate": "2025-07-21"
-    //     "Exams": [
+    //     "EventID": "2f7d395d-f5fc-4a0e-af2d-855324f6e7f1",
+    //     "EventDate": "2025-08-01",
+    //     "Examinations": [
     //         {
-    //             "DateTime": "yyyy-MM-dd",
-    //             "ExaminationText": "string"
+    //             "DateTime": "01.08.2025 15:47:15",
+    //             "ExaminationText": "\r\r\r\rЖалобы\r\nЖалобЫ 1 тест\r\nАнамнез жизни\r\nАнамнез жизнИ 11 тест",
+    //             "Recommendation": "рекомендации 1 тест",
+    //             "SEMDs": [
+    //                 {
+    //                     "SEMDContent": "Base64"
+    //                 }
+    //             ]
     //         }
     //     ]
     // }
@@ -24,8 +30,8 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                                         ,{MedicalExaminations / Examination}
                                         ,{MedicalExaminations / ExaminationDate}
                                         ,{MedicalExaminations / ExaminationTime}
-                                        ,{MedicalExaminations / CardNotes}
-                                        ,{MedicalExaminations / CardNotes / CardNoteFile / Content}
+                                        // ,{MedicalExaminations / CardNotes}
+                                        ,{MedicalExaminations / CardNotes / CardNoteFile / Content} // ПЕРЕДЕЛАТЬ НА QUERY
 
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID and {CloseDate} = Null()
@@ -41,19 +47,27 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                 begin()
 
                     foreach(ME in @thisqrEmergEvent->{MedicalExaminations})
-                    if(@ME->{CardNotes}->Count()>0) //, {ObjectProperties / ObjectType} = 228))
+                    //if(@ME->ChildExists({CardNotes}, {ObjectProperties / ObjectType} = 228)) // Фольтровать, отдавать только те, что содержать СЭМД 191 - Осмотр
                     begin(Exam)
                         @Exam := new MP.EXAMINATION();
 
                         @Exam -> {DateTime} := str(Cast(Str(@ME->{ExaminationDate},"yyyy-MM-dd")+ " "+ Str(@ME->{ExaminationTime},"HH:mm:ss"), "DateTime"));
-                        @Exam -> {ExaminationText} := HTMLToPlainText(UnPackString(@ME -> {Examination}));
-
-                        @Exam -> {Recommendation} := @ME->{CardNotes}->Count();//str(@ME -> {Recomendations});
+                        @Exam -> {ExaminationText} := UnPackString(@ME -> {Examination}); // HTMLToPlainText( 
+                        @Exam -> {Recommendation} := str(@ME -> {Recomendations});
+                        
                         foreach(CN in @ME->{CardNotes})
-                        //if({ObjectProperties / ObjectType} = 228)
-                        begin(SEMD)
+                        if(@CN->{ObjectProperties / ObjectType} = 228) // СЭМД 191 - Осмотр лечащим врачом
+                        begin(SEMD,zipfile,list_files,file,xml)
                             @SEMD := new MP.SEMD();
-                            @SEMD -> {SEMDContent} := Str(@CN-> {CardNoteFile / Content},"Base64");
+                            // @SEMD -> {SEMDContent} := Str((@CN-> {CardNoteFile / Content}),"Base64"); // без Str() - тип System.Byte[]
+
+                @zipfile := new FileZip(@CN-> {CardNoteFile / Content});
+                @list_files := @zipfile.Files;
+                @file := @list_files[0];
+                @xml := @file.GetString();
+
+                @SEMD -> {SEMDContent} := @xml; 
+
                             @Exam -> {SEMDs} -> Add(@SEMD);
                             //$throw (Str(@SEMD,"Json"));
                         end;
