@@ -1,5 +1,5 @@
 // /getWorkers.  МП. Список врачей по ID МО или Филиала
-begin(qrWrks, moWrkPosts, lpu, isLpu, str, err) 
+begin(WrkrsList, lpu, isLpu, status, qrWrks,  moWrkPosts, err) 
     //============== JSON СТРУКТУРА ОТВЕТА ==============
     // {
     //     "Workers": [ 
@@ -142,22 +142,35 @@ begin(qrWrks, moWrkPosts, lpu, isLpu, str, err)
 
     end
     catch(ex)
-    begin()
-        @err := new MP.ERROR();
-        @err -> {code} := "99";
+    begin(errJson)
+
         // @ex := IsNull(@ex->{InnerException}->{InnerException}->{InnerException}->{InnerException},
         //         IsNull(@ex->{InnerException}->{InnerException}->{InnerException},
         //         IsNull(@ex->{InnerException}->{InnerException},
         //         IsNull(@ex->{InnerException},@ex))));
                 
-        @err-> {message} := @ex->{InnerException};
+        // @err-> {message} := @ex->{InnerException};
 
-        if (str(IsNull(@ex -> {InnerException},""))<>"")
-            @err-> {message}:=SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}),char(13)+char(10)))
-        else
-            @err-> {message}:="Прочая ошибка";
+        // if (str(IsNull(@ex -> {InnerException},""))<>"")
+        //     @err-> {message}:=SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}),char(13)+char(10)))
+        // else
+        //     @err-> {message}:="Прочая ошибка";
 
-        @WrkrsList->{error} := @err;
+        @err := @ex->{InnerException};
+        // $throw(@err);
+
+        while (RegExMatch("--> ", @err, "All")->Count()>0 )
+             @err := SubString(@err,IndexOf(@err,"--> ")+4,StringLen(@err));
+
+
+        //@errJson -> {code} := IndexOf(@err,Char(13));
+        @err := SubString(@err,IndexOf(@err,":")+2,IndexOf(@err,Char(13))-IndexOf(@err,":")-2 );
+
+        @errJson := new MP.ERROR();
+        @errJson -> {code} := "99";
+        @errJson-> {message} := @err;
+
+        @WrkrsList->{error} := @errJson;
         @response.StatusCode := 500;
         return(@WrkrsList);
 
