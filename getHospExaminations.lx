@@ -48,14 +48,16 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
 
                     foreach(ME in @thisqrEmergEvent->{MedicalExaminations})
                     //if(@ME->ChildExists({CardNotes}, {ObjectProperties / ObjectType} = 228)) // Фольтровать, отдавать только те, что содержать СЭМД 191 - Осмотр
-                    begin(Exam)
+                    begin(Exam, qrCN)
                         @Exam := new MP.EXAMINATION();
 
                         @Exam -> {DateTime} := str(Cast(Str(@ME->{ExaminationDate},"yyyy-MM-dd")+ " "+ Str(@ME->{ExaminationTime},"HH:mm:ss"), "DateTime"));
                         @Exam -> {ExaminationText} := UnPackString(@ME -> {Examination}); // HTMLToPlainText( 
                         @Exam -> {Recommendation} := str(@ME -> {Recomendations});
                         
-                        foreach(CN in @ME->{CardNotes})
+                        @qrCN := query top 1 from "AKUZ.CARD_NOTE_FILE" 
+                                where {CardNote / AmbulanceCardRecord} = @ME;
+                        foreach (CN in @qrCN) //(CN in @ME->{CardNotes})
                         if(@CN->{ObjectProperties / ObjectType} = 228) // СЭМД 191 - Осмотр лечащим врачом
                         begin(SEMD,cnfContent,zipfile,list_files,file,xml)
                             @SEMD := new MP.SEMD();
