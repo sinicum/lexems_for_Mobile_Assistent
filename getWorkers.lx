@@ -1,5 +1,5 @@
 // /getWorkers.  МП. Список врачей по ID МО или Филиала
-begin(WrkrsList, lpu, isLpu, status, qrWrks,  moWrkPosts, err) 
+begin(WrkrsList, lpu, isLpu, status, qrWrks, worker, moWrkPosts, err) 
     //============== JSON СТРУКТУРА ОТВЕТА ==============
     // {
     //     "Workers": [ 
@@ -110,6 +110,7 @@ begin(WrkrsList, lpu, isLpu, status, qrWrks,  moWrkPosts, err)
 
             end;
 
+            @WrkrsList->{Workers} -> Add(@worker);
             // @ms := new MemoryStream();
             // @worker.WriteAsJson(@ms, .{{id},{SNILS},{lastName},{firstName},{middleName},{birthDate},{positions/id},{positions/dateBegin},{positions/dateEnd},{positions/departmentId},{positions/departmentName},{positions/positionName},{positions/positionFedCode},{positions/positionRegName},{positions/positionSpecialityCode},{positions/positionSpecialityName},{positions/rate} });
             // @arr := @ms.ToArray();
@@ -123,8 +124,6 @@ begin(WrkrsList, lpu, isLpu, status, qrWrks,  moWrkPosts, err)
                 @err-> {code} := "02";
                 @err-> {message} := "В базе отсутствует подразделение (МО или филиал) с указанным идентификатором, либо оно не активно";
             end;
-
-            @WrkrsList->{Workers} -> Add(@worker);
 
         end
         else begin() //-- КРИВОЙ ПАРАМЕТР
