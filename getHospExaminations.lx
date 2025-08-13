@@ -31,7 +31,7 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                                         ,{MedicalExaminations / ExaminationDate}
                                         ,{MedicalExaminations / ExaminationTime}
                                         // ,{MedicalExaminations / CardNotes}
-                                        ,{MedicalExaminations / CardNotes / CardNoteFile / Content} // ПЕРЕДЕЛАТЬ НА QUERY
+                                        //,{MedicalExaminations / CardNotes / CardNoteFile / Content} // ПЕРЕДЕЛАТЬ НА QUERY
 
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID and {CloseDate} = Null()
@@ -55,7 +55,7 @@ begin(patID, HospExamsList, qrEmergEvent ,status)
                         @Exam -> {ExaminationText} := UnPackString(@ME -> {Examination}); // HTMLToPlainText( 
                         @Exam -> {Recommendation} := str(@ME -> {Recomendations});
                         
-                        @qrCN := query top 1 from "AKUZ.CARD_NOTE_FILE" 
+                        @qrCN := query top 1 {Content} from "AKUZ.CARD_NOTE_FILE" 
                                 where {CardNote / AmbulanceCardRecord} = @ME;
                         foreach (CN in @qrCN) //(CN in @ME->{CardNotes})
                         if(@CN->{ObjectProperties / ObjectType} = 228) // СЭМД 191 - Осмотр лечащим врачом
