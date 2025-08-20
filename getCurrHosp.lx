@@ -1,13 +1,14 @@
+// ----- Текущая госпитализация. /getCurrHosp
 begin(patID, HospList, Hosp, qrEmergEvent ,status)
 
     //declare MP.HOSPS_LIST(Hospitalizations:MP.HOSP_EVENT[Collection1],error:string);   
     //declare MP.HOSP_EVENT(Collection1:MP.HOSPS_LIST,EventID:string,CreationDateTime:string,CloseDate:string,ReceptionDiagnosis:string,Diagnosis:string,HospitalizationType:string,HospitalizationReason:string,Division:string,LpuName:string,Operations:MP.OPER[Collection2],Exams:MP.EXAM[Collection3]); 
     //declare MP.OPER(Collection2:MP.HOSP_EVENT,RouteDate:string,OperName:string,OperStatus:string); 
-    //declare MP.EXAM(Collection3:MP.HOSP_EVENT,ExaminationDate:string,ExaminationTime:string,Status:string,Post:string,MedicalExaminationType:string,RoutesToDiagnostic:MP.ROUTE_TO_DIAGNOSTIC[Collection4],RoutesToDoctor:MP.ROUTE_TO_DOCTOR[Collection5],HospDestinations:MP.HOSPITAL_DESTINATION[Collection6]);
+    //declare MP.EXAM(Collection3:MP.HOSP_EVENT,ExaminationDate:string,ExaminationTime:string,Status:string,Post:string,MedicalExaminationType:string,Recomendations:string,RoutesToDiagnostic:MP.ROUTE_TO_DIAGNOSTIC[Collection4],RoutesToDoctor:MP.ROUTE_TO_DOCTOR[Collection5],HospDestinations:MP.HOSPITAL_DESTINATION[Collection6]);
     //declare MP.ROUTE_TO_DIAGNOSTIC(Collection4:MP.EXAM,RouteDate:string,ResearchCode:string,ResearchName:string);
     //declare MP.ROUTE_TO_DOCTOR(Collection5:MP.EXAM,RouteDate:string,SpecialityCode:string,SpecialityName:string);
     //declare MP.HOSPITAL_DESTINATION(Collection6:MP.EXAM,Signa:string);
-
+    
     @status := 200;
     @HospList := new MP.HOSPS_LIST();
     @patID := TryCast(@querystring["patId"], "Guid");
@@ -66,7 +67,7 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
                                         @Oper := new MP.OPER();
                                         @Oper -> {OperName} := @thisqr -> {SummaryOperationName};
                                         @Oper -> {RouteDate} := IsNull(@thisqr -> str({OperationPlannedDate},"dd.MM.yyyy"),@thisqr -> str({RouteDate},"dd.MM.yyyy"));
-                                        @Oper -> {OperStatus} := 0;
+                                        @Oper -> {OperStatus} := "В плане";
                                         
                                         if (str(@thisqr -> {OperationProtocol / OperationProtocolID})<>"")
                                             begin(OperationProtocolID,QRProtocol)
@@ -77,8 +78,8 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
                                                 if (@QRProtocol -> Count()>0)
                                                     begin()
                                                         @Oper -> {RouteDate} := @QRProtocol[0] -> str({BeginTime},"dd.MM.yyyy");
-                                                        if (@QRProtocol[0] -> {StageType} = 3) @Oper -> {OperStatus} := 1;
-                                                        if (@QRProtocol[0] -> {StageType} > 3) @Oper -> {OperStatus} := 2;
+                                                        if (@QRProtocol[0] -> {StageType} = 3) @Oper -> {OperStatus} := "Идет операция";
+                                                        if (@QRProtocol[0] -> {StageType} > 3) @Oper -> {OperStatus} := "Завершена";
                                                     end;
                                             end;                                      
                                         //проверка выполнения в SURGICAL_OPERATION
@@ -96,8 +97,8 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
                                                     if (@QRSO -> Count()>0)
                                                         begin()
                                                             @Oper -> {RouteDate} := IsNull(IsNull(@QRSO[0] -> str({EndDate},"dd.MM.yyyy"),@QRSO[0] -> str({BeginTime},"dd.MM.yyyy")),@thisqr -> str({RouteDate},"dd.MM.yyyy"));
-                                                            @Oper -> {OperStatus} := 2;
-                                                            if (str(@QRSO[0] -> {EndTime})="") @Oper -> {OperStatus} := 1;
+                                                            @Oper -> {OperStatus} := "Завершена";
+                                                            if (str(@QRSO[0] -> {EndTime})="") @Oper -> {OperStatus} := "Идет операция";
                                                         end;                                           
                                                 end;                                               
                                         end;                                  
@@ -113,6 +114,7 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
                                 ,{Post / DisplayName}
                                 ,{MedicalExaminationType}
                                 ,{MedicalRecordID} 
+                                ,{Recomendations}
                                 from "AKUZ.MEDICAL_EXAMINATION" 
                                 where {AmbulanceEvent / EventID} = @EventID  //And {MedicalExaminationType} <> 0
                                 And {Movement / MovementID} = @MCRMovementID //And {Status}<>Null()
@@ -125,6 +127,7 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
                                         @Exam -> {ExaminationTime} := @thisQRLastExam -> str({ExaminationTime},"HH:mm");
                                         @Exam -> {Status} := @thisQRLastExam -> str({Status});
                                         @Exam -> {Post} := @thisQRLastExam -> {Post / DisplayName};
+                                        @Exam -> {Recomendations} := @thisQRLastExam -> {Recomendations};
                                         @Exam -> {MedicalExaminationType} := @thisQRLastExam -> str({MedicalExaminationType});
                                         @MEMedicalRecordID := @thisQRLastExam -> {MedicalRecordID};
                                         //Направления на диагностику
