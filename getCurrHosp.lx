@@ -58,8 +58,9 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
                             @Hosp->{LpuName} := @thisEmergEvent ->{AmbulanceCard / CardLpu / Name};
                             //Операции
                             begin(QROperation,Oper)
-                                @QROperation := (query {MedicalRecordID},{SummaryOperationName},{RouteDate},{OperationPlannedDate},
-                                {OperationProtocol / OperationProtocolID}
+                                
+                                @QROperation := (query {MedicalRecordID},{SummaryOperationName},{RouteDate}
+                                                    ,{OperationPlannedDate},{OperationProtocol / OperationProtocolID}
                                 from "AKUZ.ROUTE_TO_OPERATION" where {AmbulanceEvent / EventID} = @EventID
                                 order by {RouteDate} desc);                  
                                 foreach(thisqr in @QROperation)
@@ -108,17 +109,18 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
                             //осмотры
                             begin(QRLastExam,MCRMovementID)
                                 @MCRMovementID := @qrEmergEvent[0] -> {MedicalcardRegistration / MovementID};
+                                
                                 @QRLastExam := (query top 10 {ExaminationDate}
-                                ,{ExaminationTime}
-                                ,{Status}
-                                ,{Post / DisplayName}
-                                ,{MedicalExaminationType}
-                                ,{MedicalRecordID} 
-                                ,{Recomendations}
-                                from "AKUZ.MEDICAL_EXAMINATION" 
-                                where {AmbulanceEvent / EventID} = @EventID  //And {MedicalExaminationType} <> 0
-                                And {Movement / MovementID} = @MCRMovementID //And {Status}<>Null()
-                                order by {ExaminationDate} desc,{ExaminationTime} desc); 
+                                                            ,{ExaminationTime}
+                                                            ,{Status}
+                                                            ,{Post / DisplayName}
+                                                            ,{MedicalExaminationType}
+                                                            ,{MedicalRecordID} 
+                                                            ,{Recomendations}
+                                                from "AKUZ.MEDICAL_EXAMINATION" 
+                                                where {AmbulanceEvent / EventID} = @EventID  //And {MedicalExaminationType} <> 0
+                                                And {Movement / MovementID} = @MCRMovementID //And {Status}<>Null()
+                                                order by {ExaminationDate} desc,{ExaminationTime} desc); 
                                 //осмотры
                                 foreach(thisQRLastExam in @QRLastExam)
                                     begin(Exam,MEMedicalRecordID)
@@ -133,12 +135,12 @@ begin(patID, HospList, Hosp, qrEmergEvent ,status)
                                         //Направления на диагностику
                                         begin(qrRouteToDiag)
                                             @qrRouteToDiag := (query {Research / Code}
-                                            ,{Research / Name}
-                                            ,{RouteDate}
-                                            from "AKUZ.ROUTE_TO_DIAGNOSTICS"
-                                            where {AmbulanceEvent / EventID} = @EventID 
-                                            And ChildExists({Relationships}, {MedicalRecordLink / MedicalRecordID} = @MEMedicalRecordID)
-                                            order by {RouteDate});
+                                                                    ,{Research / Name}
+                                                                    ,{RouteDate}
+                                                        from "AKUZ.ROUTE_TO_DIAGNOSTICS"
+                                                        where {AmbulanceEvent / EventID} = @EventID 
+                                                        And ChildExists({Relationships}, {MedicalRecordLink / MedicalRecordID} = @MEMedicalRecordID)
+                                                        order by {RouteDate});
                                             foreach(thisqrRouteToDiag in @qrRouteToDiag)
                                                 begin(Route_Diag)
                                                     @Route_Diag := new MP.ROUTE_TO_DIAGNOSTIC();
