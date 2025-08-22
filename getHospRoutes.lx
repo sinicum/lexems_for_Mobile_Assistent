@@ -6,6 +6,8 @@ begin(patID, HospRecordsList, qrEmergEvent, qrRouteToDiag, qrRouteToDoctor, stat
     //declare MP.ROUTE_TO_DOCTOR(Collection5:MP.HOSP_RECS_LIST,RouteDate:string,SpecialityCode:string,SpecialityName:string);
 
     //{
+    //    "EventID": "giud",
+    //    "EventDate": "yyy-MM-dd",
     //    "RoutesToDiagnostic": [
     //        {
     //            "RouteDate": "10.07.2025",
@@ -35,7 +37,7 @@ begin(patID, HospRecordsList, qrEmergEvent, qrRouteToDiag, qrRouteToDoctor, stat
                             from "AKUZ.EMERGENCY_EVENT" 
                             where {AmbulanceCard / Patient / PatientID} = @patID and {CloseDate} = Null()
                             order by {CreationDateTime} desc
-                        ;                        
+                        ;
 
             if (@qrEmergEvent -> Count()>0)
             begin(EventID)
