@@ -18,7 +18,8 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
                 //------- ENTRY_AMBULANCE -------//
                 @qrEntries := query {Ticket / TicketTime}
                                         ,{Ticket / TicketType}
-                                        ,{EntryPlace}   
+                                        ,{EntryPlace} 
+                                        ,{Place}  
                                         ,{ObjectProperties / ObjectType / EntDesc}
                                         ,{Resource / As AKUZ.POST / Worker / FIO}
                                         ,{Resource / Speciality / Name}
@@ -58,6 +59,7 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
                     @Entry->{EntryPlace} := Str(@thisEntry->{EntryPlace});
                     @Entry->{EntryType} := @thisEntry->{ObjectProperties / ObjectType / EntDesc};
                     @Entry->{Resource} := @thisEntry->{Resource / As AKUZ.POST / DisplayName};
+                    @Entry->{Place} := @thisEntry->{Place};
                     @Entry->{Branch} := @thisEntry ->{Resource / Division / Branch / Name};
                     @Entry->{LpuName} := @thisEntry ->{Resource / Division / Branch / LpuMain / Name} ;
 
