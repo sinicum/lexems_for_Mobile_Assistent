@@ -1,6 +1,6 @@
 //------- Маршрутный лист /getRoutesList 
 //------- сделан приближённо к шаблону отчета "Маршрутный лист"
-begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,status)
+begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,status, err)
 
     try 
     begin()
@@ -16,10 +16,14 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
         if(@patID<>Null() and @patID<>"") //----- ПАРАМЕТР patId УКАЗАН-----
         begin()
 
-            @selEmergEvent := select top 1 {EventID}
+            @selEmergEvent := select top 1 {EventID},{EventDate}
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID
                         order by {EventDate} desc;
+            // @qrEmergEvent := query top 1 {EventID}
+            //             from "AKUZ.EMERGENCY_EVENT" 
+            //             where {AmbulanceCard / Patient / PatientID} = @patID
+            //             order by {EventDate} desc;
 
             if(@selEmergEvent->Count()>0) //----- НАЙДЕН ЛИ СЛУЧАЙ ------//
             begin()
@@ -45,12 +49,10 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
                 //@RoutesList -> {error} := @EmergEventID;// @routeRecords ->Count();
 
                 @EmergEventID := @selEmergEvent[0][0]; // a268e6d7-618c-4b83-97ca-c9dc8b79b55b
-                // @qrEmergEvent := query top 1 {EventID}
-                //             from "AKUZ.EMERGENCY_EVENT" 
-                //             where {AmbulanceCard / Patient / PatientID} = @patID;
 
-                @RoutesList -> {EventID} := @selEmergEvent[0][0] -> {EventID};
-                @RoutesList -> {EventDate} := Str(@selEmergEvent[0][0] -> {EventDate},"yyyy-MM-dd");
+
+                @RoutesList -> {EventID} := @selEmergEvent[0][0] ;
+                @RoutesList -> {EventDate} := Str(@selEmergEvent[0][1] ,"yyyy-MM-dd");
 
 
                 @routeRecords := query {MedicalRecordID}
@@ -99,15 +101,16 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
                     @Route->{Place} := "Каб.№" +@thisRoute->{EntryAmbulance / Place}+ " "+ @thisRoute->{EntryAmbulance / Resource / DisplayName};
                     @Route->{ResultExits} := @thisRoute->{ResultExits};
                     if (@thisRoute->{ResultExits})
-                    begin()
+                    begin(MedicalRecordID)
                         //{ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION"
-                                                @qrRouteToDiag := (query {Research / Code}
-                                                                        ,{Research / Name}
-                                                                        ,{RouteDate}
-                                                            from "AKUZ.MEDICAL_EXAMINATION"
-                                                            where {AmbulanceEvent / EventID} = @EventID 
-                                                            And ChildExists({Relationships}, {MedicalRecordLink / MedicalRecordID} = @MEMedicalRecordID)
-                                                            order by {RouteDate});
+                        @MedicalRecordID := @thisRoute->{MedicalRecordID};
+                        @qrME := (query {Research / Code}
+                                        ,{Research / Name}
+                                        ,{RouteDate}
+                                    from "AKUZ.MEDICAL_EXAMINATION"
+                                    where {AmbulanceEvent / EventID} = @EmergEventID 
+                                    And ChildExists({Relationships}, {MedicalRecordLink / MedicalRecordID} = @MedicalRecordID)
+                                    order by {ExaminationTime});
                     end;
                     
 
@@ -144,14 +147,19 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
     catch(ex)
     begin()
 
+        @status:=500;
+        @response.StatusCode:=@status;
         // @ex := IsNull(@ex->{InnerException}->{InnerException}->{InnerException}->{InnerException},
         //         IsNull(@ex->{InnerException}->{InnerException}->{InnerException},
         //         IsNull(@ex->{InnerException}->{InnerException},
         //         IsNull(@ex->{InnerException},@ex))));
-    
-        @status:=500;
-        @response.StatusCode:=@status;
-        @RoutesList->{error} :=  @ex-> {InnerException};//  Str(@ELN,"Json");
+
+        @err := @ex->{InnerException};
+        // while (RegExMatch("--> ", @err, "All")->Count()>0 )
+        //     @err := SubString(@err,IndexOf(@err,"--> ")+4,StringLen(@err));
+
+        @RoutesList->{error} := @err;//SubString(@err,IndexOf(@err,":")+2,IndexOf(@err,Char(13))-IndexOf(@err,":")-2 );
+
         return(@RoutesList);
 
     end;
