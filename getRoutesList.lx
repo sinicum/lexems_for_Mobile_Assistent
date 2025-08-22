@@ -1,5 +1,6 @@
-
-begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
+//------- Маршрутный лист /getRoutesList 
+//------- сделан приближённо к шаблону отчета "Маршрутный лист"
+begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,status)
 
     try 
     begin()
@@ -12,95 +13,121 @@ begin(patID, RoutesList, routeRecords, Route, EmergEventID ,status)
         @RoutesList := new MP.ROUTES_LIST();
 
 
-        if(@patID<>Null() and @patID<>"") 
+        if(@patID<>Null() and @patID<>"") //----- ПАРАМЕТР patId УКАЗАН-----
         begin()
 
-            @EmergEventID := select top 1 {EventID}
+            @selEmergEvent := select top 1 {EventID}
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID
                         order by {EventDate} desc;
-            @EmergEventID := @EmergEventID[0][0]; // a268e6d7-618c-4b83-97ca-c9dc8b79b55b
-            // @qrEmergEvent := query top 1 {EventID}
-            //             from "AKUZ.EMERGENCY_EVENT" 
-            //             where {AmbulanceCard / Patient / PatientID} = @patID;
-            
-            @routeRecords := query {MedicalRecordID}
-                                    //,{ObjectProperties / ObjectTypeID}
-                                    ,{ObjectProperties / ObjectType / EntName}
-                                    ,{RouteDate} // Дата  создания
-                                    ,{RecordTime}  //  и время создания
 
-                                    ,{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Speciality / Name}
-                                    ,{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Number}
-
-                                    ,{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name}
-                                    ,{As AKUZ.ROUTE_TO_DIAGNOSTICS / NumberDirection}
-                                    // ,{RouteToDiagnosticsAddInfo / As AKUZ.X_RAY_ADD_INFO / XRayAddParamss/ DiagnosticsDictionary / Name}
-                                    // ,{RouteToDiagnosticsAddInfo / As AKUZ.X_RAY_ADD_INFO / XRayAddParamss/ ExaminationArea}
-                                    ,{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / EconomicCode}
-                                    ,{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Code}
-
-                                    ,{EntryAmbulance / Place}
-                                    ,{EntryAmbulance / Resource / DisplayName}
-                                    
-                                    ,{ResultExits} 
-
-                                    ,{AmbulanceCard / CardLpu / Name}
-                                    
-                        from "AKUZ.ROUTE_RECORD" 
-                        where {AmbulanceEvent / EventID} = @EmergEventID
-                            and ({ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION"
-                                or {ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DIAGNOSTICS")
-                            ;
-
-
-            // ============== JSON структура  ==============
-            // {
-            //     "Routes": [ 
-            //         {
-            //             "Type": "string"                         // Тип ROUTE_TO_DOCTOR_INSPECTION - ко вроачу, ROUTE_TO_DIAGNOSTICS - на исследование
-            //             "CreationDateTime": "dd-MM-yyyy HH:mm",  // Дата и время создания
-            //             "Name" : "string",                       // Наименование услуги / специальности
-            //             "Place": "string",                       // Место приёма                         {EntryAmbulance / Place}
-            //             "HospitalizationReason": "string",       // Причина госпитализации
-            //             "ResultExits": "string",                 // Исполнение
-            //             "LpuName": "string",                     // Наименование МО
-            //         }
-            //     ]
-            // }
-
-            @RoutesList -> {error} := @EmergEventID;// @routeRecords ->Count();
-
-            if (@routeRecords->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
-            foreach(thisRoute in @routeRecords)
-            //if(@thisRoute ->{ObjectProperties / ObjectTypeID} IN "AKUZ.ROUTE_TO_DOCTOR_INSPECTION")
+            if(@selEmergEvent->Count()>0) //----- НАЙДЕН ЛИ СЛУЧАЙ ------//
             begin()
 
-                @Route := new MP.ROUTE();
-                @Route->{Type} := @thisRoute ->{ObjectProperties / ObjectType / EntName};
-                @Route->{CreationDateTime} := Str(@thisRoute->{RouteDate},"yyyy-MM-dd") +" "+ Str(@thisRoute->{RecordTime},"HH:mm");
 
-                @Route->{Name} := IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name}
-                    , @thisRoute-> {As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Speciality / Name} +" ["+ Str(@thisRoute->{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Number})+"]"    
-                    , @thisRoute-> {As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name} +" [" + IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / EconomicCode}, @thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Code})+"]") 
-                    ;
+                // ============== JSON структура  ==============
+                // {
+                //     "EventID": "guid",
+                //     "EventDate": "dd-MM-yyyy",
+                //     "Routes": [ 
+                //         {
+                //             "Type": "string"                         // Тип ROUTE_TO_DOCTOR_INSPECTION - ко вроачу, ROUTE_TO_DIAGNOSTICS - на исследование
+                //             "CreationDateTime": "dd-MM-yyyy HH:mm",  // Дата и время создания
+                //             "Name" : "string",                       // Наименование услуги / специальности
+                //             "Place": "string",                       // Место приёма                         {EntryAmbulance / Place}
+                //             "HospitalizationReason": "string",       // Причина госпитализации
+                //             "ResultExits": "string",                 // Исполнение
+                //             "LpuName": "string",                     // Наименование МО
+                //         }
+                //     ]
+                // }
 
-                @Route->{Place} := "Каб.№" +@thisRoute->{EntryAmbulance / Place}+ " "+ @thisRoute->{EntryAmbulance / Resource / DisplayName};
-                @Route->{ResultExits} := @thisRoute->{ResultExits};
-                
+                //@RoutesList -> {error} := @EmergEventID;// @routeRecords ->Count();
+
+                @EmergEventID := @selEmergEvent[0][0]; // a268e6d7-618c-4b83-97ca-c9dc8b79b55b
+                // @qrEmergEvent := query top 1 {EventID}
+                //             from "AKUZ.EMERGENCY_EVENT" 
+                //             where {AmbulanceCard / Patient / PatientID} = @patID;
+
+                @RoutesList -> {EventID} := @selEmergEvent[0][0] -> {EventID};
+                @RoutesList -> {EventDate} := Str(@selEmergEvent[0][0] -> {EventDate},"yyyy-MM-dd");
 
 
-                @Route->{LpuName} := @thisRoute ->{AmbulanceCard / CardLpu / Name};
+                @routeRecords := query {MedicalRecordID}
+                                        //,{ObjectProperties / ObjectTypeID}
+                                        ,{ObjectProperties / ObjectType / EntName}
+                                        ,{RouteDate} // Дата  создания
+                                        ,{RecordTime}  //  и время создания
+
+                                        ,{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Speciality / Name}
+                                        ,{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Number}
+
+                                        ,{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name}
+                                        ,{As AKUZ.ROUTE_TO_DIAGNOSTICS / NumberDirection}
+                                        // ,{RouteToDiagnosticsAddInfo / As AKUZ.X_RAY_ADD_INFO / XRayAddParamss/ DiagnosticsDictionary / Name}
+                                        // ,{RouteToDiagnosticsAddInfo / As AKUZ.X_RAY_ADD_INFO / XRayAddParamss/ ExaminationArea}
+                                        ,{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / EconomicCode}
+                                        ,{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Code}
+
+                                        ,{EntryAmbulance / Place}
+                                        ,{EntryAmbulance / Resource / DisplayName}
+                                        
+                                        ,{ResultExits} 
+
+                                        ,{AmbulanceCard / CardLpu / Name}
+                                        
+                            from "AKUZ.ROUTE_RECORD" 
+                            where {AmbulanceEvent / EventID} = @EmergEventID
+                                and ({ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION"
+                                    or {ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DIAGNOSTICS")
+                                ;
+
+                if (@routeRecords->Count()>0 )  //----- НАЙДЕНЫ ЛИ НАЗНАЧЕНИЯ ------//
+                foreach(thisRoute in @routeRecords)
+                //if(@thisRoute ->{ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION")
+                begin()
+
+                    @Route := new MP.ROUTE();
+                    @Route->{Type} := @thisRoute ->{ObjectProperties / ObjectType / EntName};
+                    @Route->{CreationDateTime} := Str(@thisRoute->{RouteDate},"yyyy-MM-dd") +" "+ Str(@thisRoute->{RecordTime},"HH:mm");
+
+                    @Route->{Name} := IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name}
+                        , @thisRoute-> {As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Speciality / Name} +" ["+ Str(@thisRoute->{As AKUZ.ROUTE_TO_DOCTOR_INSPECTION / Number})+"]"    
+                        , @thisRoute-> {As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name} +" [" + IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / EconomicCode}, @thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Code})+"]") 
+                        ;
+
+                    @Route->{Place} := "Каб.№" +@thisRoute->{EntryAmbulance / Place}+ " "+ @thisRoute->{EntryAmbulance / Resource / DisplayName};
+                    @Route->{ResultExits} := @thisRoute->{ResultExits};
+                    if (@thisRoute->{ResultExits})
+                    begin()
+                        //{ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION"
+                                                @qrRouteToDiag := (query {Research / Code}
+                                                                        ,{Research / Name}
+                                                                        ,{RouteDate}
+                                                            from "AKUZ.MEDICAL_EXAMINATION"
+                                                            where {AmbulanceEvent / EventID} = @EventID 
+                                                            And ChildExists({Relationships}, {MedicalRecordLink / MedicalRecordID} = @MEMedicalRecordID)
+                                                            order by {RouteDate});
+                    end;
+                    
+
+                    @Route->{LpuName} := @thisRoute ->{AmbulanceCard / CardLpu / Name};
 
 
-                @RoutesList->{Routes} -> Add(@Route);
-                //@RoutesList->{error} := Str(@ELN,"Json");
+                    @RoutesList->{Routes} -> Add(@Route);
+                    //@RoutesList->{error} := Str(@ELN,"Json");
 
+                end
+                else
+                begin()
+                    @status:=206;
+                    @RoutesList->{error} := "Не найдены направления по указанному patId";
+                end;
             end
             else
             begin()
                 @status:=206;
-                @RoutesList->{error} := "Не найдены направления по указанному patId";
+                @RoutesList->{error} := "Не найдены случаи по указанному patId";
             end;
 
         end else 
