@@ -19,9 +19,12 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
                 @qrEntries := query {Ticket / TicketTime}
                                         ,{Ticket / TicketType}
                                         ,{EntryPlace} 
-                                        ,{Place}  
                                         ,{ObjectProperties / ObjectType / EntDesc}
+                                        ,{Place}
                                         ,{Resource / As AKUZ.POST / Worker / FIO}
+                                        ,{Resource / As AKUZ.POST / Worker / FirstName}
+                                        ,{Resource / As AKUZ.POST / Worker / LastName}
+                                        ,{Resource / As AKUZ.POST / Worker / FatherName}
                                         ,{Resource / Speciality / Name}
                                         ,{Resource / Division / Branch / Name}
                                         ,{Resource / Division / Branch / LpuMain / Name} 
@@ -39,7 +42,10 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
                 //             "TicketType": "string",                      // Тип талона
                 //             "EntryPlace": "string",                      // Место записи
                 //             "EntryType": "string",                       // Тип записи
+                //             "Place" : "123",                             // Место приёма
                 //             "Resource" : "Фамилия И.О. (специальность)", // Врач
+                //             "ResFIO" : "ФИО",                            // ФИО врача или кабинета
+                //             "Speciality" : "Специальность",              // Специальность
                 //             "Branch": "string",                          // Подразделение
                 //             "LpuName": "string",                         // Наименование МО
                 //         }
@@ -59,6 +65,10 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
                     @Entry->{EntryPlace} := Str(@thisEntry->{EntryPlace});
                     @Entry->{EntryType} := @thisEntry->{ObjectProperties / ObjectType / EntDesc};
                     @Entry->{Resource} := @thisEntry->{Resource / As AKUZ.POST / DisplayName};
+                    @Entry->{ResFIO} := @thisEntry->{Resource / As AKUZ.POST / Worker / LastName} +" "+ 
+                                        @thisEntry->{Resource / As AKUZ.POST / Worker / FirstName}+" "+ 
+                                        IsNull(@thisEntry->{Resource / As AKUZ.POST / Worker / FatherName},"");
+                    @Entry->{Speciality} := @thisEntry->{Resource / Speciality / Name};
                     @Entry->{Place} := @thisEntry->{Place};
                     @Entry->{Branch} := @thisEntry ->{Resource / Division / Branch / Name};
                     @Entry->{LpuName} := @thisEntry ->{Resource / Division / Branch / LpuMain / Name} ;
