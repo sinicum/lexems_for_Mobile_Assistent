@@ -100,17 +100,18 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
 
                     @Route->{Place} := "Каб.№" +@thisRoute->{EntryAmbulance / Place}+ " "+ @thisRoute->{EntryAmbulance / Resource / DisplayName};
                     @Route->{ResultExits} := @thisRoute->{ResultExits};
-                    if (@thisRoute->{ResultExits})
-                    begin(MedicalRecordID)
+                    if (@thisRoute->{ResultExits}=True)
+                    begin(MedicalRecordID, qrME)
                         //{ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION"
-                        @MedicalRecordID := @thisRoute->{MedicalRecordID};
-                        @qrME := (query {Research / Code}
-                                        ,{Research / Name}
-                                        ,{RouteDate}
+                        @MedicalRecordID := @thisRoute -> {MedicalRecordID};
+                        @qrME := query top 1 {MedicalRecordID}
+                                            ,{Post / Worker / FIO}
+                                            ,{Post / Speciality / Name}
                                     from "AKUZ.MEDICAL_EXAMINATION"
                                     where {AmbulanceEvent / EventID} = @EmergEventID 
                                     And ChildExists({Relationships}, {MedicalRecordLink / MedicalRecordID} = @MedicalRecordID)
-                                    order by {ExaminationTime});
+                                    order by {ExaminationTime};
+                        
                     end;
                     
 
