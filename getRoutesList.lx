@@ -99,7 +99,7 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
                         ;
 
                     @Route->{Place} := "Каб.№" +@thisRoute->{EntryAmbulance / Place}+ " "+ @thisRoute->{EntryAmbulance / Resource / DisplayName};
-                    //@Route->{ResultExits} := @thisRoute->{ResultExits};
+                    @Route->{ResultExits} := @thisRoute->{ResultExits};
                     if (@thisRoute->{ResultExits}=True)
                     begin(MedicalRecordID, qrME)
                         if(@thisRoute ->{ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION")
