@@ -99,23 +99,39 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
                         ;
 
                     @Route->{Place} := "Каб.№" +@thisRoute->{EntryAmbulance / Place}+ " "+ @thisRoute->{EntryAmbulance / Resource / DisplayName};
-                    @Route->{ResultExits} := @thisRoute->{ResultExits};
+                    //@Route->{ResultExits} := @thisRoute->{ResultExits};
                     if (@thisRoute->{ResultExits}=True)
                     begin(MedicalRecordID, qrME)
-                        //{ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION"
-                        @MedicalRecordID := @thisRoute -> {MedicalRecordID};
-                        @qrME := query top 1 {MedicalRecordID}
-                                            ,{Post / Worker / FIO}
-                                            ,{Post / Speciality / Name}
-                                    from "AKUZ.MEDICAL_EXAMINATION"
-                                    where {AmbulanceEvent / EventID} = @EmergEventID 
-                                    And ChildExists({Relationships}, {MedicalRecordLink / MedicalRecordID} = @MedicalRecordID)
-                                    order by {ExaminationTime};
-                        foreach(ME in @qrME)
+                        if(@thisRoute ->{ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION")
                         begin()
-                            @Route->{ResultExits} := @ME -> {Post / Worker / FIO};
+                            @MedicalRecordID := @thisRoute -> {MedicalRecordID};
+                            @qrME := query top 1 {MedicalRecordID}
+                                                ,{Post / Worker / FIO}
+                                                ,{Post / Speciality / Name}
+                                        from "AKUZ.MEDICAL_EXAMINATION"
+                                        where {AmbulanceEvent / EventID} = @EmergEventID 
+                                        And ChildExists({Relationships}, {MedicalRecordLink / MedicalRecordID} = @MedicalRecordID)
+                                        order by {ExaminationTime};
+                            foreach(ME in @qrME)
+                            begin()
+                                @Route->{ResultExits} := @ME -> {Post / Worker / FIO};
+                            end;
+                        end else
+                        if(@thisRoute ->{ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DIAGNOSTICS")
+                        begin()
+                            @MedicalRecordID := @thisRoute -> {MedicalRecordID};
+                            @qrME := query top 1 {MedicalRecordID}
+                                                ,{Post / Worker / FIO}
+                                                ,{Post / Speciality / Name}
+                                        from "AKUZ.DIAGNOSTICS_RESULTS"
+                                        where {AmbulanceEvent / EventID} = @EmergEventID 
+                                        And ChildExists({Relationships}, {MedicalRecordLink / MedicalRecordID} = @MedicalRecordID)
+                                        order by {RecordTime};
+                            foreach(ME in @qrME)
+                            begin()
+                                @Route->{ResultExits} := @ME -> {Post / Worker / FIO};
+                            end;
                         end;
-                        
                     end;
                     
 
@@ -160,10 +176,10 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
         //         IsNull(@ex->{InnerException},@ex))));
 
         @err := @ex->{InnerException};
-        // while (RegExMatch("--> ", @err, "All")->Count()>0 )
-        //     @err := SubString(@err,IndexOf(@err,"--> ")+4,StringLen(@err));
+        while (RegExMatch("--> ", @err, "All")->Count()>0 )
+            @err := SubString(@err,IndexOf(@err,"--> ")+4,StringLen(@err));
 
-        @RoutesList->{error} := @err;//SubString(@err,IndexOf(@err,":")+2,IndexOf(@err,Char(13))-IndexOf(@err,":")-2 );
+        @RoutesList->{error} := SubString(@err,IndexOf(@err,":")+2,IndexOf(@err,Char(13))-IndexOf(@err,":")-2 );
 
         return(@RoutesList);
 
