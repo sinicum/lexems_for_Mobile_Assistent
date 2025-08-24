@@ -111,6 +111,10 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
                                     where {AmbulanceEvent / EventID} = @EmergEventID 
                                     And ChildExists({Relationships}, {MedicalRecordLink / MedicalRecordID} = @MedicalRecordID)
                                     order by {ExaminationTime};
+                        foreach(ME in @qrME)
+                        begin()
+                            @Route->{ResultExits} := @ME -> {Post / Worker / FIO};
+                        end;
                         
                     end;
                     
