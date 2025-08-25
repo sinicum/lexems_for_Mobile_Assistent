@@ -66,7 +66,7 @@ begin(patID, HospExamsList, qrEmergEvent ,status, err)
                         begin(SEMD,cnfContent,zipfile,list_files,file,xml)
                             //$throw(Str(@qrCN->Count()));
                             @SEMD := new MP.SEMD();
-                            @SEMD -> {SEMDContent} := Str((@CN-> {Content}),"Base64"); // без Str() - тип System.Byte[] // UnzipByteArray
+                            @SEMD -> {SEMDContent} := Str(UnzipByteArray(@CN-> {Content}),"Base64"); // без Str() - тип System.Byte[] // UnzipByteArray
 
                             // @cnfContent := @CN-> {CardNoteFile / Content};
                             // @zipfile := new FileZip(@cnfContent.GetStream());
