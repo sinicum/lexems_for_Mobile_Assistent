@@ -49,7 +49,7 @@ begin(patID, HospExamsList, qrEmergEvent ,status, err)
 
                     foreach(ME in @thisqrEmergEvent->{MedicalExaminations})
                     //if(@ME->ChildExists({CardNotes}, {ObjectProperties / ObjectType} = 228)) // Фольтровать, отдавать только те, что содержать СЭМД 191 - Осмотр
-                    begin(Exam, qrCN, MEID)
+                    begin(Exam, qrCNF, MEID)
                         @Exam := new MP.EXAMINATION();
 
                         @Exam -> {DateTime} := str(Cast(Str(@ME->{ExaminationDate},"yyyy-MM-dd")+ " "+ Str(@ME->{ExaminationTime},"HH:mm:ss"), "DateTime"));
@@ -57,23 +57,16 @@ begin(patID, HospExamsList, qrEmergEvent ,status, err)
                         if(@ME -> {Recomendations}<>Null()) @Exam -> {Recommendation} := str(@ME -> {Recomendations});
 
                         @MEID := @ME -> {MedicalRecordID};
-                        @qrCN := query top 1 {Content} from "AKUZ.CARD_NOTE_FILE" 
-                                where {CardNote / AmbulanceCardRecord} = @MEID;
+                        @qrCNF := query top 1 {Content},{CardNote / ObjectProperties / ObjectTypeID}
+                                 from "AKUZ.CARD_NOTE_FILE" 
+                                 where {CardNote / AmbulanceCardRecord} = @MEID;
                         
-                        
-                        foreach (CN in @qrCN) //(CN in @ME->{CardNotes})
-                        // if(@CN->{ObjectProperties / ObjectType} = 228) // СЭМД 191 - Осмотр лечащим врачом
-                        begin(SEMD,cnfContent,zipfile,list_files,file,xml)
-                            $throw(Str(@CN->{ObjectProperties / ObjectType}));
+                        foreach (CN in @qrCNF) //(CN in @ME->{CardNotes})
+                        if(@CN->{CardNote / ObjectProperties / ObjectTypeID} IS "AKUZ.CN_CDA_EXAMINATION_ATTENDING_DOCTOR") // СЭМД 191 - Осмотр лечащим врачом...(CDA) Редакция 1
+                        begin(SEMD)
+
                             @SEMD := new MP.SEMD();
                             @SEMD -> {SEMDContent} := Str(UnzipByteArray(@CN-> {Content}),"Base64"); // без Str() - тип System.Byte[] // UnzipByteArray
-
-                            // @cnfContent := @CN-> {CardNoteFile / Content};
-                            // @zipfile := new FileZip(@cnfContent.GetStream());
-                            // @list_files := @zipfile.Files;
-                            // @file := @list_files[0];
-                            // @xml := @file.GetString();
-                            // @SEMD -> {SEMDContent} := @xml; 
 
                             @Exam -> {SEMDs} -> Add(@SEMD);
                             //$throw (Str(@SEMD,"Json"));
