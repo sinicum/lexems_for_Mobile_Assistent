@@ -54,7 +54,7 @@ begin(patID, HospExamsList, qrEmergEvent ,status, err)
 
                         @Exam -> {DateTime} := str(Cast(Str(@ME->{ExaminationDate},"yyyy-MM-dd")+ " "+ Str(@ME->{ExaminationTime},"HH:mm:ss"), "DateTime"));
                         @Exam -> {ExaminationText} := UnPackString(@ME -> {Examination}); // HTMLToPlainText( 
-                        @Exam -> {Recommendation} := str(@ME -> {Recomendations});
+                        if(@ME -> {Recomendations}<>Null()) @Exam -> {Recommendation} := str(@ME -> {Recomendations});
 
                         @MEID := @ME -> {MedicalRecordID};
                         @qrCN := query top 1 {Content} from "AKUZ.CARD_NOTE_FILE" 
@@ -64,7 +64,7 @@ begin(patID, HospExamsList, qrEmergEvent ,status, err)
                         foreach (CN in @qrCN) //(CN in @ME->{CardNotes})
                         // if(@CN->{ObjectProperties / ObjectType} = 228) // СЭМД 191 - Осмотр лечащим врачом
                         begin(SEMD,cnfContent,zipfile,list_files,file,xml)
-                            //$throw(Str(@qrCN->Count()));
+                            $throw(Str(@CN->{ObjectProperties / ObjectType}));
                             @SEMD := new MP.SEMD();
                             @SEMD -> {SEMDContent} := Str(UnzipByteArray(@CN-> {Content}),"Base64"); // без Str() - тип System.Byte[] // UnzipByteArray
 
