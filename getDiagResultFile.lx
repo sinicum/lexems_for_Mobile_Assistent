@@ -1,0 +1,68 @@
+//--- Отдает результат исследования в файл PDF в Base64 {"content": "Base64text"}
+begin(patID, status, file1, p,v,f,res,p2)
+
+    try 
+    begin()
+        
+        @patID :=  @querystring["patId"]; // "6fe66cae-409a-4f56-8ae9-d55d3c38569b" // ТЕСТ 99
+        @status := 200;
+
+        @file1 := new MP.REPORT();
+
+        if(@patID<>Null() and @patID<>"") 
+        begin()
+
+            @v := query {VaccinationLinkID} from "AKUZ.DIAGNOSTICS_RESULTS" 
+                    where {VaccinationCardRecord / AmbulanceCard / Patient / PatientID}= @patID;  // ROCK "4c6f4d0e-4cdc-47fb-a435-3433759d8f6b"; Козырев - 53 вакцинации
+            print(@v-> Count()); // 53
+
+            @f := query top 1 {Name},{Content} from "VCLib.FILE" // ШАБЛОН добавлен в "VCLib.FILE" через доп.команды 
+                    where {FileID} = "2dd72095-4fb8-46ec-bb31-14d0b9a41594"; // ROCK guid("250d224e-5982-4a67-a0bc-62195902e6ad"); // Immunization.doc 
+                    // where {FileID} = "8c33f589-2232-4b87-9659-63e99af6d2e7" ; // Immunization.htm - требует доработки
+
+            if (@v ->Count()>0 )
+            begin()
+
+
+                if (@res->Count()>0)
+                    @refile1port->{content} := Str(@res[0]->{content},"Base64")
+                else 
+                    @file1->{error} := "Рузультат отчета пустой";
+
+
+                // ============== JSON структура  ==========
+                // {
+                //     "error": "string",
+                //     "content": "base64text"
+                // }
+
+
+            end
+            else
+            begin()
+                @status:=206;
+                @file1->{error} := "Не найдены вакцинации по данному пациенту";
+            end;
+
+        end else 
+        begin()
+            @status:=206;
+            @file1->{error} := "Не указан параметр patId";
+        end;
+
+
+        
+        @response.StatusCode:=@status;
+        return(@file1);
+    end
+    catch(ex)
+    begin()
+
+   
+        @status:=500;
+        @response.StatusCode:=@status;
+        @file1->{error} :=  @ex-> {InnerException};//  Str(@ELN,"Json");
+        return(@file1);
+
+    end;
+end
