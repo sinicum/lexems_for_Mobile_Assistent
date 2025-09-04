@@ -19,7 +19,7 @@ begin(resultID, qrDR, status, file1)
             begin(drID)
                 foreach (dr in @qrDR)
                 @drID := @qrDR-> {MedicalRecordID};
-                @qrFile := query top 1 {Name},{Content} from "VCLib.DIAGNOSTICS_RESULTS_FILE" // ШАБЛОН добавлен в "VCLib.FILE" через доп.команды 
+                @qrFile := query top 1 {Name},{Content} from "AKUZ.DIAGNOSTICS_RESULTS_FILE" // ШАБЛОН добавлен в "VCLib.FILE" через доп.команды 
                         where {DiagnosticsResult / MedicalRecordID} = @drID; // 
 
                 if (@qrFile ->Count()>0 )
