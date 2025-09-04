@@ -4,7 +4,7 @@ begin(resultID, qrDR, status, file1)
     try 
     begin()
         // 	Карпова Л.Э. (Врач клинической лабораторной диагностики)	27.08.2025	18:30		ГАУЗ Зеленодольская ЦРБ		№231037 Тестова Агата Николаевна 09.05.2020	Обращение 01.07.2025 - 	15.07.2024		Тестова Агата Николаевна	Поликлиника Врачей Общей Практики ( семейный врач )	A09.19.001|Д30 Исследование кала на скрытую кровь  1 этап			ГАУЗ Зеленодольская ЦРБ	172786
-        @resultID := new Guid("e323feca-fcb4-489b-8e81-2f0dc1a02a81"); // @querystring["resultId"];  // ТЕСТ 99
+        @resultID :=  @querystring["resultId"];  // ТЕСТ 99
         @status := 200;
 
         @file1 := new MP.RESULT_FILE();
@@ -27,7 +27,7 @@ begin(resultID, qrDR, status, file1)
 
 
                     if (@qrFile->Count()>0)
-                        @file1->{content} := Str(@qrFile[0]->{content},"Base64")
+                        @file1->{content} := Str(@qrFile[0]->{Content},"Base64")
                     else 
                         @file1->{error} := "Рузультат отчета пустой";
 
