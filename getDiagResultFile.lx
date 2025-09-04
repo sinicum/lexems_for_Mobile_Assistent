@@ -4,21 +4,21 @@ begin(resultID, qrDR, status, file1)
     try 
     begin()
         // 	Карпова Л.Э. (Врач клинической лабораторной диагностики)	27.08.2025	18:30		ГАУЗ Зеленодольская ЦРБ		№231037 Тестова Агата Николаевна 09.05.2020	Обращение 01.07.2025 - 	15.07.2024		Тестова Агата Николаевна	Поликлиника Врачей Общей Практики ( семейный врач )	A09.19.001|Д30 Исследование кала на скрытую кровь  1 этап			ГАУЗ Зеленодольская ЦРБ	172786
-        @resultID := "e323feca-fcb4-489b-8e81-2f0dc1a02a81"; // @querystring["resultId"];  // ТЕСТ 99
+        @resultID := new Guid("e323feca-fcb4-489b-8e81-2f0dc1a02a81"); // @querystring["resultId"];  // ТЕСТ 99
         @status := 200;
 
         @file1 := new MP.RESULT_FILE();
 
-        if(@resultID<>Null() and @resultID<>"") 
-        begin()
+        // if(@resultID<>Null() and @resultID<>"") 
+        // begin()
 
             @qrDR := query top 1 {MedicalRecordID} from "AKUZ.DIAGNOSTICS_RESULTS" 
                     where {MedicalRecordID}= @resultID;  // 
 
             if (@qrDR ->Count()>0 )
-            begin(drID)
+            begin(drID,qrFile)
                 foreach (dr in @qrDR)
-                @drID := @qrDR-> {MedicalRecordID};
+                @drID := @dr-> {MedicalRecordID};
                 @qrFile := query top 1 {Name},{Content} from "AKUZ.DIAGNOSTICS_RESULTS_FILE" // ШАБЛОН добавлен в "VCLib.FILE" через доп.команды 
                         where {DiagnosticsResult / MedicalRecordID} = @drID; // 
 
@@ -26,7 +26,7 @@ begin(resultID, qrDR, status, file1)
                 begin()
 
 
-                    if (@f->Count()>0)
+                    if (@qrFile->Count()>0)
                         @file1->{content} := Str(@qrFile[0]->{content},"Base64")
                     else 
                         @file1->{error} := "Рузультат отчета пустой";
@@ -48,11 +48,11 @@ begin(resultID, qrDR, status, file1)
             
             end;
 
-        end else 
-        begin()
-            @status:=206;
-            @file1->{error} := "Не указан параметр patId";
-        end;
+        // end else 
+        // begin()
+        //     @status:=206;
+        //     @file1->{error} := "Не указан параметр patId";
+        // end;
 
 
         
