@@ -22,9 +22,9 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                                         ,{PostingDate}
                                         ,{Research / Code}
                                         ,{Research / Name}
-                                        // ,{Post / Worker/FIO}
-                                        // ,{Post / Speciality/Name}
-                                        // ,{ResearchLpu / Name}
+                                        ,{Post / Worker/FIO}
+                                        ,{Post / Speciality/Name}
+                                        ,{ResearchLpu / Name}
 
                                         //,{CardNotes}
 
@@ -39,12 +39,14 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                 //     "DainosticsResults": [ 
                 //         {
                 //             "DiagResultID": "GUID"               // Идентификатор результат
+                //             "ContainsFile": True                 // Содержит результат
                 //             "EmdrID":"224.16.25.05.000080291",   // Идентификатор ЭМД , для запроса в АЭМД
                 //             "PostingDate": "dd-MM-yyyy",         // Дата события
                 //             "MedServiceCode": "string",          // Код исследования
                 //             "MedServiceName": "string",          // Наименование исследования
-                //             "Post": "string",                    // Врач
-                //             "LpuName": "string",                 // Наименование МО     // {ResearchLpu / NameFull}
+                //             "PostName": "string",                // ФИО Врача
+                //             "PostSpec": "string",                // Специальность врача // отдаём из SPECIALITY, можем отдавать по V021
+                //             "LpuName": "string",                 // Наименование МО     // убрал длинное {ResearchLpu / NameFull}
                 //         }
                 //     ]
                 // }
@@ -79,7 +81,12 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                     @DiagRes->{MedServiceCode} := @thisDiagResult ->{Research / Code};
                     @DiagRes->{MedServiceName} := @thisDiagResult ->{Research / Name};
                     // @DiagRes->{Post} := @thisDiagResult ->{Post / DisplayName};
-                    // @DiagRes->{LpuName} := @thisDiagResult ->{ResearchLpu / Name};
+                    @DiagRes->{Post} := @thisDiagResult ->{Post / Worker/FIO};
+                    @DiagRes->{Post} := @thisDiagResult ->{Post / Speciality/Name}; 
+                    @DiagRes->{LpuName} := @thisDiagResult ->{ResearchLpu / Name};
+
+,
+,
 
                     @DiagResList->{DainosticsResults} -> Add(@DiagRes);  
 
