@@ -25,6 +25,7 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                                         ,{Post / Worker/FIO}
                                         ,{Post / Speciality/Name}
                                         ,{ResearchLpu / Name}
+                                        ,{AmbulanceEvent / EventID}
 
                                         //,{CardNotes}
 
@@ -38,7 +39,7 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                 // {
                 //     "DainosticsResults": [ 
                 //         {
-                //             "DiagResultID": "GUID"               // Идентификатор результат
+                //             "DiagResultID": "GUID"               // Идентификатор результата
                 //             "ContainsFile": True                 // Содержит результат
                 //             "EmdrID":"224.16.25.05.000080291",   // Идентификатор ЭМД , для запроса в АЭМД
                 //             "PostingDate": "dd-MM-yyyy",         // Дата события
@@ -47,6 +48,7 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                 //             "PostName": "string",                // ФИО Врача
                 //             "PostSpec": "string",                // Специальность врача // отдаём из SPECIALITY, можем отдавать по V021
                 //             "LpuName": "string",                 // Наименование МО     // убрал длинное {ResearchLpu / NameFull}
+                //             "EventID": "string",                 // Идентификатор случая
                 //         }
                 //     ]
                 // }
@@ -81,12 +83,10 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                     @DiagRes->{MedServiceCode} := @thisDiagResult ->{Research / Code};
                     @DiagRes->{MedServiceName} := @thisDiagResult ->{Research / Name};
                     // @DiagRes->{Post} := @thisDiagResult ->{Post / DisplayName};
-                    @DiagRes->{Post} := @thisDiagResult ->{Post / Worker/FIO};
+                    @DiagRes->{PostName} := @thisDiagResult ->{Post / Worker/FIO};
                     @DiagRes->{Post} := @thisDiagResult ->{Post / Speciality/Name}; 
                     @DiagRes->{LpuName} := @thisDiagResult ->{ResearchLpu / Name};
-
-,
-,
+                    @DiagRes->{EventID} := @thisDiagResult ->{AmbulanceEvent / EventID};
 
                     @DiagResList->{DainosticsResults} -> Add(@DiagRes);  
 
