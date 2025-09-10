@@ -19,13 +19,13 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                 // CARD_NOTE - 5cf64466-e248-4dc0-9ddc-efb0a2e46445  // 224 - Протокол инструментального исследования (CDA) Редакция 5 // 224.16.25.05.000080291
                 //------- DIAGNOSTICS_RESULTS -------// 1407910a-1901-4b21-be2d-0ef89041f4fe // 06.05.2025	
                 @qrDiagResults := query top 5 {MedicalRecordID}
-                                        ,{PostingDate}
-                                        ,{Research / Code}
-                                        ,{Research / Name}
-                                        ,{Post / Worker/FIO}
-                                        ,{Post / Speciality/Name}
-                                        ,{ResearchLpu / Name}
-                                        ,{AmbulanceEvent / EventID}
+                                            ,{PostingDate}
+                                            ,{Research / Code}
+                                            ,{Research / Name}
+                                            ,{Post / Worker/FIO}
+                                            ,{Post / Speciality/Name}
+                                            ,{ResearchLpu / Name}
+                                            ,{AmbulanceEvent / EventID}
 
                                         //,{CardNotes}
 
@@ -40,7 +40,7 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                 //     "DainosticsResults": [ 
                 //         {
                 //             "DiagResultID": "GUID"               // Идентификатор результата
-                //             "ContainsFile": True                 // Содержит результат
+                //             "ContainsFile": 1                    // Содержит результат
                 //             "EmdrID":"224.16.25.05.000080291",   // Идентификатор ЭМД , для запроса в АЭМД
                 //             "PostingDate": "dd-MM-yyyy",         // Дата события
                 //             "MedServiceCode": "string",          // Код исследования
@@ -57,7 +57,7 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
 
                 if (@qrDiagResults->Count()>0 )  //----- НАЙДЕНЫ ЛИ РЕЗУЛЬТАТЫ ---------//
                 foreach(thisDiagResult in @qrDiagResults)
-                begin()
+                begin(selFile)
 
                     @DiagRes := new MP.DIAG_RESULT();
 
@@ -75,16 +75,23 @@ begin(patID, DiagResList, DiagRes, qrDiagResults, drID, qrCardNote, selCardNote,
                     //                 and {ActualRemdEmdrMessage / RegistrationState} = 3 // статус зарегистрирован
                     //             ;
                     // if (@qrCardNote->Count()>0) @EmdrID:= @qrCardNote[0]-> {ActualRemdEmdrMessage / EmdrID};
-                    // if (@qrCardNote->Count()>0) @EmdrDate:= @qrCardNote[0] -> {ActualRemdEmdrMessage / RegistrationDate};                    
+                    // if (@qrCardNote->Count()>0) @EmdrDate:= @qrCardNote[0] -> {ActualRemdEmdrMessage / RegistrationDate};
+
+                    @selFile := query top 1 {FileID} from "AKUZ.DIAGNOSTICS_RESULTS_FILE" 
+                            where {DiagnosticsResult / MedicalRecordID} = @drID
+                            order by {CreateDateTime} desc
+                            ; 
 
                     @DiagRes->{DiagResultID} := @drID;
+                    //if (@selFile->Count()>Null()) 
+                    @DiagRes->{ContainsFile} := @selFile->Count() ;
                     if(@EmdrID<>Null()) @DiagRes->{EmdrID} := @EmdrID;
                     @DiagRes->{PostingDate} := Str(@thisDiagResult->{PostingDate},"yyyy-MM-dd");
                     @DiagRes->{MedServiceCode} := @thisDiagResult ->{Research / Code};
                     @DiagRes->{MedServiceName} := @thisDiagResult ->{Research / Name};
                     // @DiagRes->{Post} := @thisDiagResult ->{Post / DisplayName};
                     @DiagRes->{PostName} := @thisDiagResult ->{Post / Worker/FIO};
-                    @DiagRes->{Post} := @thisDiagResult ->{Post / Speciality/Name}; 
+                    @DiagRes->{PostSpec} := @thisDiagResult ->{Post / Speciality/Name}; 
                     @DiagRes->{LpuName} := @thisDiagResult ->{ResearchLpu / Name};
                     @DiagRes->{EventID} := @thisDiagResult ->{AmbulanceEvent / EventID};
 
