@@ -1,0 +1,113 @@
+// Метод /getDepartments - Отдаем список МО и Филиалов
+begin(attach, qrMos, qrBranches, moList,moAdr,moCnts,ms,bo,arr,str) 
+
+    // ОПИСАНИЕ СТРУКТУР СУЩНОСТЕЙ
+    // declare MP.MO_ADDRESS(
+    //     type:string,
+    //     display:string,
+    //     latitude:string,
+    //     longitude:string,
+    //     Parent:TIS.MO_MAIN
+    // );
+
+    // declare MP.MO_MAIN(
+    //     id:string,
+    //     OID:string,
+    //     attached:string,
+    //     parentId:string,
+    //     code:string,
+    //     fullname:string,
+    //     shortname:string,
+    //     type:string,
+    //     inn:string,
+    //     kpp:string,
+    //     ogrn:string,
+    //     address:MP.MO_ADDRESS[Parent],
+
+    // );
+
+    @str := "[";
+
+    @attach := @querystring["attach"]; //--
+
+    //------- МО-шки по LPU_MAIN -------//
+    //-- "585a2851-e999-40a6-8979-79aecbfc2e89" - "ГАУЗ \"ГКБ №7 им. М.Н.Садыкова\""
+    @qrMos := query {LpuID},{EhrRusMdr308 / oid},{LpuCode},{NameFull},{Name},{InnCode},{KppCode},{OGRNCode},{Address/DisplayName},{AddressString},{Phone}
+            from "AKUZ.LPU_MAIN" 
+            where {LpuSettings} <> Null()
+                and {EhrRusMdr308 / oid} <> Null() ;
+    if (@qrMos->Count()=0) return();
+    //@moList := new List();
+    //@moList := new TIS.MO_LIST();
+    foreach(thisMo in @qrMos)
+    begin(moMain, attached, moID)
+    @moMain := new MP.MO_MAIN();
+        @moID := @thisMo -> {LpuID};
+        @moMain->{id} := @moID;
+        @moMain->{OID} := @thisMo -> {EhrRusMdr308 / oid};
+        //-- если указан параметр attach, то выполняется запрос количества прикрепленного населения для МО
+        if(@attach <> Null()) @attached := select COUNT() from "AKUZ.AMBULANCE_CARD" where {State / LpuMain / LpuID} = @moID; 
+        if (@attached <> Null()) @moMain->{attached} := @attached[0][0]; //-- если запрос выше вернул значение больше 0
+        @moMain->{parentId} := Null();
+        if(@thisMo->{NameFull}<>Null()) @moMain->{fullname} := @thisMo->{NameFull};
+        @moMain->{shortname} := @thisMo->{Name};
+        @moMain->{type} := "Юридическое лицо";
+        if(@thisMo->{InnCode}<>Null()) @moMain->{inn} := @thisMo->{InnCode};
+        if(@thisMo->{KppCode}<>Null()) @moMain->{kpp} := @thisMo->{KppCode};
+        if(@thisMo->{OGRNCode}<>Null() and @thisMo->{OGRNCode}<>"" ) @moMain->{ogrn} := @thisMo->{OGRNCode};
+            // address
+            if(@thisMo->{Address}<>Null() or @thisMo->{AddressString}<>Null()) begin()
+            @moAdr := new MP.MO_ADDRESS();
+                @moAdr->{type} :="Юридический";
+                @moAdr->{display} := if(@thisMo->{Address}<>Null()) @thisMo->{Address / DisplayName} else @thisMo->{AddressString};
+                @moMain->{address} -> Add(@moAdr);
+            end;
+
+        @ms := new MemoryStream();
+        @moMain.WriteAsJson(@ms, .{{id},{OID},{attached},{parentId},{fullname},{shortname},{type},{inn},{kpp},{ogrn},{address/type},{address/display}});
+        @arr := @ms.ToArray();
+        
+        @str := @str + Str(@arr, "ByteToUTF8") + ",";
+        //$throw(str(@str));
+        //@moList -> Add(@str);
+    end;
+
+    //------- Филиалы по BRANCH -------//
+    @qrBranches := query {LpuID},{LpuMain / LpuID},{NameFull},{Name},{Address / DisplayName},{AddressString},{Category},{Latitude},{Longitude},{RegistryPhones},{Email},{Site}
+                from "AKUZ.BRANCH" 
+                where {LpuMain / LpuSettings} <> Null() 
+                    and {LpuMain / EhrRusMdr308 / oid} <> Null() 
+                    and {LpuSettings} <> Null()  ;
+
+    foreach(thisMo in @qrBranches) 
+    begin(moMain)
+    @moMain := new MP.MO_MAIN();
+        @moMain->{id} := @thisMo->{LpuID};
+        @moMain->{parentId} := @thisMo->{LpuMain / LpuID};
+        if(@thisMo->{NameFull}<>Null()) @moMain->{fullname} := @thisMo->{NameFull};
+        @moMain->{shortname} := @thisMo->{Name};
+        @moMain->{type} := Str(@thisMo->{Category});
+            // address
+            if(@thisMo->{Address}<>Null() or @thisMo->{AddressString}<>Null()) begin()
+            @moAdr := new MP.MO_ADDRESS();
+                @moAdr->{type} :="Фактический";
+                @moAdr->{display} := if(@thisMo->{Address}<>Null()) @thisMo->{Address / DisplayName} else @thisMo->{AddressString};
+                if(@thisMo->{Latitude}<>Null()) @moAdr->{latitude} := @thisMo->{Latitude};
+                if(@thisMo->{Longitude}<>Null()) @moAdr->{longitude} := @thisMo->{Longitude};
+                @moMain->{address} -> Add(@moAdr);
+            end;
+
+
+        @ms := new MemoryStream();
+        @moMain.WriteAsJson(@ms, .{{id},{parentId},{fullname},{shortname},{type},{inn},{kpp},{ogrn},{address/type},{address/display},{address/latitude},{address/longitude}});
+        @arr := @ms.ToArray();
+        
+        @str := @str + Str(@arr, "ByteToUTF8") + ",";
+        //$throw(str(@str));
+        //@moList -> Add(@str);
+    end;
+
+    @str := Substring(@str,0,StringLen(@str)-if(@qrMos->count()=0 and @qrBranches->count()=0) 0 else 1) +  "]";
+    return(Str(@str,"Json"));
+
+end
