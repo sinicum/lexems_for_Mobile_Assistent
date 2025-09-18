@@ -66,7 +66,7 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
                     @Entry->{EntryPlace} := Str(@thisEntry->{EntryPlace});
                     @Entry->{EntryType} := @thisEntry->{ObjectProperties / ObjectType / EntDesc};
                     @Entry->{Resource} := @thisEntry->{Resource / As AKUZ.POST / DisplayName};
-                    @Entry->{ResFIO} := IsNull(@thisEntry->{Resource / As AKUZ.ROOM / Name},
+                    @Entry->{ResourceName} := IsNull(@thisEntry->{Resource / As AKUZ.ROOM / Name},
                                             @thisEntry->{Resource / As AKUZ.POST / Worker / LastName} +" "+ 
                                             @thisEntry->{Resource / As AKUZ.POST / Worker / FirstName}+" "+ 
                                             IsNull(@thisEntry->{Resource / As AKUZ.POST / Worker / FatherName},"")
