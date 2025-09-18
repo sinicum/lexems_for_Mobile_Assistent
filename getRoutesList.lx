@@ -118,7 +118,8 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, RouteRes, EmergEven
                             begin()
                                 @RouteRes := new MP.ROUTE_RESULT();
                                 @RouteRes->{Resource} := @ME -> {Post / Worker / FIO};
-                                @RouteRes->{DiagResultId} := @ME -> {MedicalRecordID};
+                                @RouteRes->{ExaminationId} := @ME -> {MedicalRecordID};
+                                @Route->{Result} := @RouteRes;
                             end;
                         end else
                         // Направление на услугу
@@ -137,6 +138,7 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, RouteRes, EmergEven
                                 @RouteRes := new MP.ROUTE_RESULT();
                                 @RouteRes->{Resource} := @DR -> {Post / Worker / FIO};
                                 @RouteRes->{DiagResultId} := @DR -> {MedicalRecordID};
+                                @Route->{Result} := @RouteRes;
                             end;
                         end;
                     end;
