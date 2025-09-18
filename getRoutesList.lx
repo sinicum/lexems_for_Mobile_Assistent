@@ -160,7 +160,7 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, RouteRes, EmergEven
             else
             begin()
                 @status:=206;
-                @RoutesList->{error} := "Не найдены случаи по указанному patId";
+                @RoutesList->{error} := "Не найдены случаи госпитализации по указанному patId";
             end;
 
         end else 
