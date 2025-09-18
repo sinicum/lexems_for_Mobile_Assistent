@@ -1,6 +1,6 @@
 //------- Маршрутный лист /getRoutesList 
 //------- сделан приближённо к шаблону отчета "Маршрутный лист"
-begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,status, err)
+begin(patID, RoutesList, selEmergEvent, routeRecords, Route, RouteRes, EmergEventID ,status, err)
 
     try 
     begin()
@@ -16,7 +16,7 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
         if(@patID<>Null() and @patID<>"") //----- ПАРАМЕТР patId УКАЗАН-----
         begin()
 
-            @selEmergEvent := select top 1 {EventID},{EventDate}
+            @selEmergEvent := select top 1 {EventID},{EventDate},{AmbulanceCard / CardLpu / Name}
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID
                         order by {EventDate} desc;
@@ -38,10 +38,10 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
                 //             "Type": "string"                         // Тип ROUTE_TO_DOCTOR_INSPECTION - ко вроачу, ROUTE_TO_DIAGNOSTICS - на исследование
                 //             "CreationDateTime": "dd-MM-yyyy HH:mm",  // Дата и время создания
                 //             "Name" : "string",                       // Наименование услуги / специальности
-                //             "Place": "string",                       // Место приёма                         {EntryAmbulance / Place}
-                //             "HospitalizationReason": "string",       // Причина госпитализации
-                //             "ResultExits": "string",                 // Исполнение
+                //             "EntryPlace": "string",                  // Кабинет приёма (при наличии записи в расписание)   {EntryAmbulance / Place}
+                //             "EntryResName": "string",                // ФИО врача или кабинета полностью (по записи)
                 //             "LpuName": "string",                     // Наименование МО
+                //             "ResultExits": "string",                 // Исполнение
                 //         }
                 //     ]
                 // }
@@ -53,6 +53,7 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
 
                 @RoutesList -> {EventID} := @selEmergEvent[0][0] ;
                 @RoutesList -> {EventDate} := Str(@selEmergEvent[0][1] ,"yyyy-MM-dd");
+                @RoutesList -> {LpuName} := @selEmergEvent[0][2] ;
 
 
                 @routeRecords := query {MedicalRecordID}
@@ -98,10 +99,11 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
                         , @thisRoute-> {As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Name} +" [" + IsNull(@thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / EconomicCode}, @thisRoute->{As AKUZ.ROUTE_TO_DIAGNOSTICS / Research / Code})+"]") 
                         ;
 
-                    @Route->{Place} := "Каб.№" +@thisRoute->{EntryAmbulance / Place}+ " "+ @thisRoute->{EntryAmbulance / Resource / DisplayName};
-                    @Route->{ResultExits} := @thisRoute->{ResultExits};
+                    @Route->{EntryPlace} := "Каб.№" +@thisRoute->{EntryAmbulance / Place}+ " "+ @thisRoute->{EntryAmbulance / Resource / DisplayName};
+                    @Route->{ResultExits} := @thisRoute->{ResultExits}; // из атрибута
                     if (@thisRoute->{ResultExits}=True)
-                    begin(MedicalRecordID, qrME)
+                    begin(MedicalRecordID, qrME,qrDR)
+                        // Направление к специалисту
                         if(@thisRoute ->{ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DOCTOR_INSPECTION")
                         begin()
                             @MedicalRecordID := @thisRoute -> {MedicalRecordID};
@@ -114,28 +116,33 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, EmergEventID ,statu
                                         order by {ExaminationTime};
                             foreach(ME in @qrME)
                             begin()
-                                @Route->{ResultExits} := @ME -> {Post / Worker / FIO};
+                                @RouteRes := new MP.ROUTE_RESULT();
+                                @RouteRes->{Resource} := @ME -> {Post / Worker / FIO};
+                                @RouteRes->{DiagResultId} := @ME -> {MedicalRecordID};
                             end;
                         end else
+                        // Направление на услугу
                         if(@thisRoute ->{ObjectProperties / ObjectTypeID} IS "AKUZ.ROUTE_TO_DIAGNOSTICS")
                         begin()
                             @MedicalRecordID := @thisRoute -> {MedicalRecordID};
-                            @qrME := query top 1 {MedicalRecordID}
+                            @qrDR := query top 1 {MedicalRecordID}
                                                 ,{Post / Worker / FIO}
                                                 ,{Post / Speciality / Name}
                                         from "AKUZ.DIAGNOSTICS_RESULTS"
                                         where {AmbulanceEvent / EventID} = @EmergEventID 
                                         And ChildExists({Relationships}, {MedicalRecordLink / MedicalRecordID} = @MedicalRecordID)
                                         order by {RecordTime};
-                            foreach(ME in @qrME)
+                            foreach(DR in @qrDR)
                             begin()
-                                @Route->{ResultExits} := @ME -> {Post / Worker / FIO};
+                                @RouteRes := new MP.ROUTE_RESULT();
+                                @RouteRes->{Resource} := @DR -> {Post / Worker / FIO};
+                                @RouteRes->{DiagResultId} := @DR -> {MedicalRecordID};
                             end;
                         end;
                     end;
                     
 
-                    @Route->{LpuName} := @thisRoute ->{AmbulanceCard / CardLpu / Name};
+                    //@Route->{LpuName} := @thisRoute ->{AmbulanceCard / CardLpu / Name};
 
 
                     @RoutesList->{Routes} -> Add(@Route);
