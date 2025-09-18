@@ -6,23 +6,22 @@
     "middleName": "Тестович",   // Отчество
     "birthDate": "1976-05-17",  // дата рождения
     "gender": "М",              // пол
-    "docType": "Паспорт",       // тип документа
+    "docType": "Паспорт",       // тип документа // по какому справочнику выгружать
     "docSer": "11 11",          // серия документа
     "docNum": "111111",         // номер документа
     "ENP": "1653240333000333",  // Единый номер полиса ОМС (16-ти значный)
     "addressReal": "string",    // адрес проживания
-    "attacBranchId": "string",  // идентификатор СТП
+    "attachBranchId": "string",  // идентификатор СТП
     "attachState" : 99,         // номер участка
     "trustedPersons": [ 
         {
-            "parentSnils": "string", // СНИЛС родителя
+            "parentSnils": "string",
             "represType" : "Мать/Отец/Иной родственник/Не родственник", // Вид родства
-            "IsGuardian" : "",      // Опекун
-            "IsTrustee" : "",       // Попечитель
             "fullName": "string",   // FIO
             "phone": "string",      // Мобильный телефон
+            "IsGuardian" : "",      // Опекун
+            "IsTrustee" : "",       // Попечитель
             "status": "string"      // Текущий представитель CurrentRepresentative
         }
     ]
 }
-
