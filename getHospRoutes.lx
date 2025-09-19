@@ -90,7 +90,7 @@ begin(patID, HospRecordsList, qrEmergEvent, qrRouteToDiag, qrRouteToDoctor, stat
             end                   
             else
             begin()
-                @HospRecordsList -> {error} := "Пациент не госпитализирован!";
+                @HospRecordsList -> {error} := "Не найдены случаи госпитализации по указанному patId";
                 @status := 206;
             end;
         end
