@@ -53,7 +53,7 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
                         @HospRecommsList -> {Recommendations} -> Add(@Recom);
                     end;
 
-                    //Рекомендации из Эпикризов
+                    //Рекомендации из Эпикризов !!!
                     foreach(Epicris in @thisqrEmergEvent->{EpicrissCollection})
                     if (str(@ME -> {Recomendations})<>"")
                     begin(Recom)
@@ -70,13 +70,13 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
             end                   
             else
             begin()
-                @HospRecommsList -> {error} := "Пациент не госпитализирован!";
+                @HospRecommsList -> {error} := "Не найдены случаи госпитализации по указанному patId";
                 @status := 206;
             end;
         end
         else
         begin()
-            @HospRecommsList -> {error} := "Идентификатор пациента указан неверно";
+            @HospRecommsList -> {error} := "Не указан параметр patId";
             @status := 206;        
         end;
         
