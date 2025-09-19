@@ -1,13 +1,17 @@
 // Осмотры врачей по текущей госпитализации. Медтод /getHospExaminations
-begin(patID, HospExamsList, qrEmergEvent ,status, err)
+begin(patID, examID, HospExamsList, qrEmergEvent ,status, err)
 
     // {
     //     "EventID": "2f7d395d-f5fc-4a0e-af2d-855324f6e7f1",
     //     "EventDate": "2025-08-01",
+    //     "LpuName": "ГАУЗ \"ГКБ №7\"",
     //     "Examinations": [
     //         {
+    //             "ExaminationId": "",
     //             "DateTime": "01.08.2025 15:47:15",
-    //             "ExaminationText": "\r\r\r\rЖалобы\r\nЖалобЫ 1 тест\r\nАнамнез жизни\r\nАнамнез жизнИ 11 тест",
+    //             "Post": "",
+    //             "Speciality": "",
+    //             "ExaminationText": "<TABLE id=e0f61ef0-8f5e-42c6-95b6-4074715902e6 class=Complaint style=\"BORDER-TOP: #ffffff 1px..... </TABLE>",
     //             "Recommendation": "рекомендации 1 тест",
     //             "SEMDs": [
     //                 {
@@ -22,15 +26,21 @@ begin(patID, HospExamsList, qrEmergEvent ,status, err)
         @status := 200;
         @HospExamsList := new MP.HOSP_EXAMS_LIST();
         @patID := TryCast(@querystring["patId"], "Guid");
+        @examID := Str(@querystring["examId"]);
 
         if (str(@patID)<>"")
         begin()
-            @qrEmergEvent := query top 1 {EventID},{EventDate}
-                                        ,{MedicalExaminations / Recomendations}
-                                        ,{MedicalExaminations / Examination}
+            @qrEmergEvent := query top 1 {EventID},{EventDate},{AmbulanceCard / CardLpu / Name}
+                                        ,{MedicalExaminations / MedicalRecordID}
                                         ,{MedicalExaminations / ExaminationDate}
                                         ,{MedicalExaminations / ExaminationTime}
-                                        ,{MedicalExaminations / MedicalRecordID}
+                                        ,{MedicalExaminations / Post / Worker / LastName}
+                                        ,{MedicalExaminations / Post / Worker / FirstName}
+                                        ,{MedicalExaminations / Post / Worker / FatherName}
+                                        ,{MedicalExaminations / Post / Speciality / Name}
+                                        ,{MedicalExaminations / Examination}
+                                        ,{MedicalExaminations / Recomendations}
+                                        
                                         // ,{MedicalExaminations / CardNotes}
                                         //,{MedicalExaminations / CardNotes / CardNoteFile / Content} // ПЕРЕДЕЛАТЬ НА QUERY
 
@@ -43,16 +53,24 @@ begin(patID, HospExamsList, qrEmergEvent ,status, err)
                 @EventID := @qrEmergEvent[0] -> {EventID};
                 @HospExamsList -> {EventID} := @qrEmergEvent[0] -> {EventID};
                 @HospExamsList -> {EventDate} := Str(@qrEmergEvent[0] -> {EventDate},"yyyy-MM-dd");
+                @HospExamsList -> {LpuName} := @qrEmergEvent[0] -> {AmbulanceCard / CardLpu / Name};
 
                 foreach(thisqrEmergEvent in @qrEmergEvent)
                 begin()
 
                     foreach(ME in @thisqrEmergEvent->{MedicalExaminations})
+                    if( @examID="" or @ME->{MedicalRecordID} = @examID) // 
+
                     //if(@ME->ChildExists({CardNotes}, {ObjectProperties / ObjectType} = 228)) // Фольтровать, отдавать только те, что содержать СЭМД 191 - Осмотр
                     begin(Exam, qrCNF, MEID)
                         @Exam := new MP.EXAMINATION();
 
+                        @Exam -> {ExaminationId} := @ME -> {MedicalRecordID};
                         @Exam -> {DateTime} := str(Cast(Str(@ME->{ExaminationDate},"yyyy-MM-dd")+ " "+ Str(@ME->{ExaminationTime},"HH:mm:ss"), "DateTime"));
+                        @Exam -> {Post} := @ME->{Post / Worker / LastName} +" "+ 
+                                            @ME->{Post / Worker / FirstName}+" "+ 
+                                            IsNull(@ME->{Post / Worker / FatherName},"");
+                        @Exam -> {Speciality} := @ME->{Post / Speciality / Name};
                         @Exam -> {ExaminationText} := UnPackString(@ME -> {Examination}); // HTMLToPlainText( 
                         if(@ME -> {Recomendations}<>Null()) @Exam -> {Recommendation} := str(@ME -> {Recomendations});
 
@@ -85,7 +103,7 @@ begin(patID, HospExamsList, qrEmergEvent ,status, err)
         end
         else
         begin()
-            @HospExamsList -> {error} := "Идентификатор пациента указан неверно";
+            @HospExamsList -> {error} := "Не указан параметр patId";
             @status := 206;        
         end;
         
