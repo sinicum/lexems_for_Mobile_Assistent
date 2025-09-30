@@ -49,7 +49,8 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
                         Or {FssLnStatus} = 30   // ЭЛН закрыт
                         Or {FssLnStatus} = 40   // ЭЛН направление на МСЭ
                         Or {FssLnStatus} = 50   // ЭЛН дополнен данными МСЭ
-                        );
+                        )
+                order by {OpenDate};
 
 
             // ============== JSON структура  ==========
@@ -71,12 +72,14 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
             //            ]
             //            "LpuName": "string",              // Наименование МО
             //            "BranchAddress" : "string",       // Адресс СП МО
+            //            "FssLnStatus": "10",
+            //            "SentSNILS": "00000060001"
             //        }
             //    ]
             //}
 
 
-            if (@qrMedCerts->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
+            if (@qrMedCerts->Count()>0 )  //----- НАЙДЕНЫ ЛИ ЭЛН ------//
             foreach(thisMedCert in @qrMedCerts)
             begin()
 
@@ -105,7 +108,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
                 end;
                 @ELN->{LpuName} := @thisMedCert ->{CardLpuName};
                 @ELN->{BranchAddress} := @thisMedCert ->{BranchAddressString};
-                @ELN->{FssLnStatus} := @thisMedCert ->{FssLnStatus};
+                @ELN->{FssLnStatus} := Str(@thisMedCert ->{FssLnStatus});
                 @ELN->{SentSNILS} := @thisMedCert ->{SentSNILS};
 
 
