@@ -1,4 +1,4 @@
-
+// ЭЛН (Больничные листы)	/getELNs
 begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,status)
 
     try 
@@ -60,7 +60,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
             //            "Number": "String"                // Номер листа нетрудоспособности
             //            "OpenDate": "dd-MM-yyyy",         // Дата открытия
             //            "DateClose": "dd-MM-yyyy",        // Дата закрытия
-            //            "ProlongationDate": "dd-MM-yyyy", // Дата продления до
+            //  //          "ProlongationDate": "dd-MM-yyyy", // Дата продления до
             //            "WorkDate": "dd-MM-yyyy",         // Дата выхода на работу
             //            "DaysCount" : Int,                // Количество дней нетрудоспособности
             //            "Cause": "string",               // Причина нетрудоспособности
@@ -84,9 +84,10 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
                 @ELN->{PatientSNILS} := @thisMedCert ->{AmbulanceCard / Patient / SNILS / SnilsID};
                 @ELN->{Number} := @thisMedCert ->{CertificateNumber};
                 @ELN->{OpenDate} := Str(@thisMedCert->{OpenDate},"yyyy-MM-dd");
-                if(@thisMedCert->{MedicalCertificateClose / DateClose}= Null() ) @ELN->{ProlongationDate} := Str(@thisMedCert->ChildCount({MedicalCertificateProlongations}, First({ProlongationDate}), Null(), {ProlongationDate}, "desc"),"yyyy-MM-dd");
+                //if(@thisMedCert->{MedicalCertificateClose / DateClose}= Null() ) @ELN->{ProlongationDate} := Str(@thisMedCert->ChildCount({MedicalCertificateProlongations}, First({ProlongationDate}), Null(), {ProlongationDate}, "desc"),"yyyy-MM-dd");
+                //if(@thisMedCert->{MedicalCertificateClose / DateClose}= Null() ) @ELN->{ProlongationDate} := Str(@thisMedCert->ChildCount({MedicalCertificateProlongations}, First({ProlongationStartDate}), Null(), {ProlongationStartDate}, "desc"),"yyyy-MM-dd");
                 if(@thisMedCert->{MedicalCertificateClose / DateClose}<>Null() ) @ELN->{DateClose}:= Str(@thisMedCert->{MedicalCertificateClose / DateClose},"yyyy-MM-dd");
-                @ELN->{WorkDate} := Str(@thisMedCert->{MedicalCertificateClose / WorkDate},"yyyy-MM-dd");
+                if(@thisMedCert->{MedicalCertificateClose / WorkDate}<>Null()  ) @ELN->{WorkDate} := Str(@thisMedCert->{MedicalCertificateClose / WorkDate},"yyyy-MM-dd");
                 @ELN->{DaysCount} := @thisMedCert ->{DaysCount};
                 @ELN->{Cause} := @thisMedCert->{MedicalCertificatesCauses / Name};
                 
@@ -97,7 +98,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
                     @ELNprlngtion := new MP.MED_CERT_PROLONGATION(); 
                     
                     @ELNprlngtion -> {StartDate} := Str(@thisProlong ->{ProlongationStartDate},"yyyy-MM-dd");
-                    @ELNprlngtion -> {ProlongationDate} := Str(@thisProlong ->{ProlongationDate},"yyyy-MM-dd");
+                    if(@thisProlong ->{ProlongationDate}<>Null()) @ELNprlngtion -> {ProlongationDate} := Str(@thisProlong ->{ProlongationDate},"yyyy-MM-dd");
                     @ELNprlngtion -> {Post} := @thisProlong ->{Post / DisplayName};
 
                     @ELN->{Prolongations} -> Add(@ELNprlngtion);
@@ -108,7 +109,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
                 @ELN->{SentSNILS} := @thisMedCert ->{SentSNILS};
 
 
-                @ELNsMain->{ELNs} -> Add(@ELN);
+                @ELNsMain->{PatientELNs} -> Add(@ELN);
                 //@ELNsMain->{error} := Str(@ELN,"Json");
 
             end
