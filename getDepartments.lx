@@ -1,32 +1,29 @@
 // Метод /getDepartments - Отдаем список МО и Филиалов
-begin(attach, qrMos, qrBranches, moList,moAdr,moCnts,ms,bo,arr,str) 
+begin(moList, attach, qrMos, qrBranches, moList,moAdr,moCnts,ms,bo,arr,str) 
 
-    // ОПИСАНИЕ СТРУКТУР СУЩНОСТЕЙ
-    // declare MP.MO_ADDRESS(
-    //     type:string,
-    //     display:string,
-    //     latitude:string,
-    //     longitude:string,
-    //     Parent:TIS.MO_MAIN
-    // );
+    //{
+    //    "Organizations": [
+    //        {
+    //            "id": "077c8a28-ef23-41ad-a056-8f8bab4a6c61",     // Идентификатор МО/Филиала
+    //            "OID": "1.2.643.5.1.13.13.12.2.16.1084",          // OID МО / Филиала
+    //            "parentId": null,                                 // Идентификатор вышестоящего подразделения
+    //            "fullname": "Государственное автономное учреждение здравоохранения  \"Азнакаевская центральная районная больница\"", // Полное наименование
+    //            "shortname": "ГАУЗ Азнакаевская ЦРБ",             // Краткое наименование
+    //            "type": "Юридическое лицо",                       // Тип подразделения (для МО: «Юридический» , для филиалов: Стационар / Поликлиника / ФАП / Амбулатория)
+    //            "inn": "1643002863",                              // ИНН
+    //            "ogrn": "1001601569980",                          // ОГРН
+    //            "address": [
+    //                {
+    //                    "type": "Юридический",                    // для МО: «Юридический»,  для филиалов «Фактический»
+    //                    "display": "423330, г.Азнакаево, ул.Г.Хасаншиной, д.21 " // Адрес строкой
+    //                }
+    //            ]
+    //        }
+    //    ]
+    //}
 
-    // declare MP.MO_MAIN(
-    //     id:string,
-    //     OID:string,
-    //     attached:string,
-    //     parentId:string,
-    //     code:string,
-    //     fullname:string,
-    //     shortname:string,
-    //     type:string,
-    //     inn:string,
-    //     kpp:string,
-    //     ogrn:string,
-    //     address:MP.MO_ADDRESS[Parent],
-
-    // );
-
-    @str := "[";
+    //@str := "[";
+    @moList := new MP.MO_LIST();
 
     @attach := @querystring["attach"]; //--
 
@@ -41,7 +38,8 @@ begin(attach, qrMos, qrBranches, moList,moAdr,moCnts,ms,bo,arr,str)
     //@moList := new TIS.MO_LIST();
     foreach(thisMo in @qrMos)
     begin(moMain, attached, moID)
-    @moMain := new MP.MO_MAIN();
+    
+        @moMain := new MP.MO_MAIN();
         @moID := @thisMo -> {LpuID};
         @moMain->{id} := @moID;
         @moMain->{OID} := @thisMo -> {EhrRusMdr308 / oid};
@@ -62,14 +60,8 @@ begin(attach, qrMos, qrBranches, moList,moAdr,moCnts,ms,bo,arr,str)
                 @moAdr->{display} := if(@thisMo->{Address}<>Null()) @thisMo->{Address / DisplayName} else @thisMo->{AddressString};
                 @moMain->{address} -> Add(@moAdr);
             end;
+            @moList -> {Organizations} -> Add(@moMain);
 
-        @ms := new MemoryStream();
-        @moMain.WriteAsJson(@ms, .{{id},{OID},{attached},{parentId},{fullname},{shortname},{type},{inn},{kpp},{ogrn},{address/type},{address/display}});
-        @arr := @ms.ToArray();
-        
-        @str := @str + Str(@arr, "ByteToUTF8") + ",";
-        //$throw(str(@str));
-        //@moList -> Add(@str);
     end;
 
     //------- Филиалы по BRANCH -------//
@@ -96,18 +88,12 @@ begin(attach, qrMos, qrBranches, moList,moAdr,moCnts,ms,bo,arr,str)
                 if(@thisMo->{Longitude}<>Null()) @moAdr->{longitude} := @thisMo->{Longitude};
                 @moMain->{address} -> Add(@moAdr);
             end;
+            @moList -> {Organizations} -> Add(@moMain); 
 
 
-        @ms := new MemoryStream();
-        @moMain.WriteAsJson(@ms, .{{id},{parentId},{fullname},{shortname},{type},{inn},{kpp},{ogrn},{address/type},{address/display},{address/latitude},{address/longitude}});
-        @arr := @ms.ToArray();
-        
-        @str := @str + Str(@arr, "ByteToUTF8") + ",";
-        //$throw(str(@str));
-        //@moList -> Add(@str);
     end;
 
-    @str := Substring(@str,0,StringLen(@str)-if(@qrMos->count()=0 and @qrBranches->count()=0) 0 else 1) +  "]";
-    return(Str(@str,"Json"));
+    //@response.StatusCode:=@status;
+    return(@moList);
 
 end
