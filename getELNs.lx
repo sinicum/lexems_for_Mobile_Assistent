@@ -50,7 +50,7 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
                         Or {FssLnStatus} = 40   // ЭЛН направление на МСЭ
                         Or {FssLnStatus} = 50   // ЭЛН дополнен данными МСЭ
                         )
-                order by {OpenDate};
+                order by {OpenDate} desc;
 
 
             // ============== JSON структура  ==========
