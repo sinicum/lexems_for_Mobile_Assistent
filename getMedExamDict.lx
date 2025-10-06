@@ -40,7 +40,13 @@ begin(qrET,ExamTypes,EType,ETypeBundle)
                 ,{BundleMedicalExaminations / MedicalService / Name}
                 ,{BundleMedicalExaminations / Speciality / Name}
             from "EXAMINATION_TYPE" 
-            where {Code} = "024" And {DateEnd} =Null();
+            where {Code} IN ("024" // ДВН 1 этап 404н
+                            ,"011" // ДВН 2 этап
+                            ,"023" // Профосмотр взрослого населения 404н
+                            ,"077" // ДВН репродуктивного здоровья - 1 этап
+                            ,"078" // ДВН репродуктивного здоровья - 2 этап
+                            ) 
+                And {DateEnd} =Null();
   
     foreach(thisqrET in @qrET)
     begin()
@@ -48,6 +54,7 @@ begin(qrET,ExamTypes,EType,ETypeBundle)
         @EType -> {Name} := @thisqrET->{Name};
         @EType -> {Code} := @thisqrET->{Code};
         foreach(Bun in @thisqrET->{BundleMedicalExaminations})
+        if(@Bun -> {AgeGroup / Name} <> Null())
         begin()
             @ETypeBundle := new MP.EXAM_TYPE_BUNDLE();
             @ETypeBundle -> {AgeGroupName} := @Bun->{AgeGroup / Name};
