@@ -1,5 +1,5 @@
 //// Отдает отчет по вакцинациям в Base64 {"content": "Base64text"}
-begin(patID, status, report, p,v,f,res,p2)
+begin(patID, status, report, p,v,f,res,p2,err)
 
     try 
     begin()
@@ -17,7 +17,7 @@ begin(patID, status, report, p,v,f,res,p2)
             print(@v-> Count()); // 53
 
             @f := query top 1 {Name},{Content} from "VCLib.FILE" // ШАБЛОН добавлен в "VCLib.FILE" через доп.команды 
-                    where {FileID} = "2dd72095-4fb8-46ec-bb31-14d0b9a41594"; // ROCK guid("250d224e-5982-4a67-a0bc-62195902e6ad"); // Immunization.doc 
+                    where {FileID} = "9f8b4dff-6dd2-4ea9-ace0-c72adc64faba"; // прод = "ab521206-3742-440c-be15-c623357f16c3" // тест РТ 99 "2dd72095-4fb8-46ec-bb31-14d0b9a41594"; // ROCK guid("250d224e-5982-4a67-a0bc-62195902e6ad"); // Immunization.doc 
                     // where {FileID} = "8c33f589-2232-4b87-9659-63e99af6d2e7" ; // Immunization.htm - требует доработки
 
             if (@v ->Count()>0 )
@@ -67,9 +67,16 @@ begin(patID, status, report, p,v,f,res,p2)
         //         IsNull(@ex->{InnerException}->{InnerException}->{InnerException},
         //         IsNull(@ex->{InnerException}->{InnerException},
         //         IsNull(@ex->{InnerException},@ex))));
-    
+
         @status:=500;
         @response.StatusCode:=@status;
+
+        @err := @ex->{InnerException};
+        while (RegExMatch("--> ", @err, "All")->Count()>0 )
+             @err := SubString(@err,IndexOf(@err,"--> ")+4,StringLen(@err));
+
+        @err := SubString(@err,IndexOf(@err,":")+2,IndexOf(@err,Char(13))-IndexOf(@err,":")-2 );
+
         @report->{error} :=  @ex-> {InnerException};//  Str(@ELN,"Json");
         return(@report);
 
