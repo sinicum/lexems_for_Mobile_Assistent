@@ -77,7 +77,7 @@ begin(patID, status, report, p,v,f,res,p2,err)
 
         @err := SubString(@err,IndexOf(@err,":")+2,IndexOf(@err,Char(13))-IndexOf(@err,":")-2 );
 
-        @report->{error} :=  @ex-> {InnerException};//  Str(@ELN,"Json");
+        @report->{error} :=  @err;//  Str(@ELN,"Json");
         return(@report);
 
     end;
