@@ -143,26 +143,12 @@ begin(WrkrsList, lpu, isLpu, status, qrWrks, worker, moWrkPosts, err)
     catch(ex)
     begin(errJson)
 
-        // @ex := IsNull(@ex->{InnerException}->{InnerException}->{InnerException}->{InnerException},
-        //         IsNull(@ex->{InnerException}->{InnerException}->{InnerException},
-        //         IsNull(@ex->{InnerException}->{InnerException},
-        //         IsNull(@ex->{InnerException},@ex))));
-                
-        // @err-> {message} := @ex->{InnerException};
-
-        // if (str(IsNull(@ex -> {InnerException},""))<>"")
-        //     @err-> {message}:=SubString(str(@ex -> {InnerException}), 0, IndexOf(str(@ex -> {InnerException}),char(13)+char(10)))
-        // else
-        //     @err-> {message}:="Прочая ошибка";
-
         @err := @ex->{InnerException};
         // $throw(@err);
 
         while (RegExMatch("--> ", @err, "All")->Count()>0 )
              @err := SubString(@err,IndexOf(@err,"--> ")+4,StringLen(@err));
 
-
-        //@errJson -> {code} := IndexOf(@err,Char(13));
         @err := SubString(@err,IndexOf(@err,":")+2,IndexOf(@err,Char(13))-IndexOf(@err,":")-2 );
 
         @errJson := new MP.ERROR();
