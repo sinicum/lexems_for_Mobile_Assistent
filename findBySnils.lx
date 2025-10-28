@@ -1,5 +1,5 @@
-//  /findBySnils. Поиск по СНИЛС. Модификация (упрощение) метода /find_pat 
-begin(snils, status, qrPats,patMain,err,ex) // dt,dtEhr,
+//  /findBySnils. Поиск по СНИЛС. Упрощенная структура
+begin(snils, status, qrPats,patient,err,ex) // dt,dtEhr,
 
     try 
     begin()
@@ -43,7 +43,8 @@ begin(snils, status, qrPats,patMain,err,ex) // dt,dtEhr,
                 // }
 
                 if (@qrPats->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
-                foreach(thisPatnt in @qrPats) begin(patient)
+                foreach(thisPatnt in @qrPats) 
+                begin()
                     @patient := new MP.PATIENT();
                     @patient->{patId} := @thisPatnt-> {PatientID};
                     @patient->{SNILS} := @thisPatnt-> {SNILS / Snils};
@@ -59,7 +60,7 @@ begin(snils, status, qrPats,patMain,err,ex) // dt,dtEhr,
                     @err := new MP.ERROR();
                     @err -> {code} := "02";
                     @err-> {message} := "Не найден пациент по указанному СНИЛС";
-                    @patMain->{error} := @err;
+                    @patient->{error} := @err;
                 end;
             end
             else begin() //-- КРИВОЙ СНИЛС
@@ -67,7 +68,7 @@ begin(snils, status, qrPats,patMain,err,ex) // dt,dtEhr,
                 @err := new MP.ERROR();
                 @err -> {code} := "01";
                 @err-> {message} := "Параметр snils имеет неверный формат";
-                @patMain->{error} := @err;
+                @patient->{error} := @err;
             end;
         end else
         begin()
@@ -75,12 +76,12 @@ begin(snils, status, qrPats,patMain,err,ex) // dt,dtEhr,
             @err := new MP.ERROR();
             @err -> {code} := "00";
             @err-> {message} := "Не указан параметр snils";
-            @patMain->{error} := @err;
+            @patient->{error} := @err;
         end;
 
         //if (@err <> Null()) return(@err) else return(@patMain);
         @response.StatusCode := @status;
-        return(@patMain);
+        return(@patient);
 
     end
     catch(ex)
@@ -98,9 +99,9 @@ begin(snils, status, qrPats,patMain,err,ex) // dt,dtEhr,
         @errJson -> {code} := "99";
         @errJson-> {message} := @err;
 
-        @patMain->{error} := @errJson;
+        @patient->{error} := @errJson;
         @response.StatusCode := 500;
-        return(@patMain);
+        return(@patient);
 
     end;
 
