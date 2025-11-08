@@ -1,7 +1,7 @@
 //  /findBySnils. Поиск по СНИЛС. Упрощенная структура
 begin(snils, status, qrPats,patient,err,ex)
 
-    //try 
+    try 
     begin()
 
         @snils := if(@querystring["snils"]="") Null() else @querystring["snils"];
@@ -82,34 +82,29 @@ begin(snils, status, qrPats,patient,err,ex)
 
         //if (@err <> Null()) return(@err) else return(@patMain);
         @response.StatusCode := @status;
-        
+        return(@patient);
 
-            @patient->{error} := @err;
-        @patient->{lastName} := Str(@err,"Json");
-        $throw(Str(@patient,"Json"));
+    end
+    catch(ex)
+    begin(errJson)
+
+        @err := @ex->{InnerException};
+        // $throw(@err);
+
+        while (RegExMatch("--> ", @err, "All")->Count()-1>0 )
+             @err := SubString(@err,IndexOf(@err,"--> ")+4,StringLen(@err));
+
+        @err := SubString(@err,IndexOf(@err,":")+2,IndexOf(@err,Char(13))-IndexOf(@err,":")-2 );
+
+        @errJson := new MP.ERROR();
+        @errJson -> {code} := "99";
+        @errJson-> {message} := @err;
+
+        @patient->{error} := @errJson;
+        @response.StatusCode := 501;
         return(@patient);
 
     end;
-    // catch(ex)
-    // begin(errJson)
-
-    //     @err := @ex->{InnerException};
-    //     // $throw(@err);
-
-    //     while (RegExMatch("--> ", @err, "All")->Count()-1>0 )
-    //          @err := SubString(@err,IndexOf(@err,"--> ")+4,StringLen(@err));
-
-    //     @err := SubString(@err,IndexOf(@err,":")+2,IndexOf(@err,Char(13))-IndexOf(@err,":")-2 );
-
-    //     @errJson := new MP.ERROR();
-    //     @errJson -> {code} := "99";
-    //     @errJson-> {message} := @err;
-
-    //     @patient->{error} := @errJson;
-    //     @response.StatusCode := 501;
-    //     return(@patient);
-
-    // end;
 
 
 end
