@@ -8,6 +8,7 @@ begin(snils, status, qrPats,patient,err,ex)
         @status := 200;
 
         //@patMain := new MP.PATIENTS_LIST();
+        @patient := new MP.PATIENT0();
 
         if (@snils <>Null())
         ////------------- ЕСЛИ УКАЗАН ПАРАМЕТР "snils" --------------
@@ -45,7 +46,7 @@ begin(snils, status, qrPats,patient,err,ex)
                 if (@qrPats->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
                 foreach(thisPatnt in @qrPats) 
                 begin()
-                    @patient := new MP.PATIENT0();
+                    
                     @patient->{patId} := @thisPatnt-> {PatientID};
                     @patient->{SNILS} := @thisPatnt-> {SNILS / Snils};
                     @patient->{lastName} := @thisPatnt->{LastName};
@@ -81,8 +82,11 @@ begin(snils, status, qrPats,patient,err,ex)
 
         //if (@err <> Null()) return(@err) else return(@patMain);
         @response.StatusCode := @status;
-        $throw("-------");
-        @patient->{lastName} := "123123";//Str(@err,"Json");
+        
+
+            @patient->{error} := @err;
+        @patient->{lastName} := Str(@err,"Json");
+        $throw(Str(@patient,"Json"));
         return(@patient);
 
     end;
