@@ -1,5 +1,5 @@
 //  /findBySnils. Поиск по СНИЛС. Упрощенная структура
-begin(snils, status, qrPats,patient,err,ex) // dt,dtEhr,
+begin(snils, status, qrPats,patient,err,ex)
 
     try 
     begin()
@@ -45,7 +45,7 @@ begin(snils, status, qrPats,patient,err,ex) // dt,dtEhr,
                 if (@qrPats->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
                 foreach(thisPatnt in @qrPats) 
                 begin()
-                    @patient := new MP.PATIENT();
+                    @patient := new MP.PATIENT0();
                     @patient->{patId} := @thisPatnt-> {PatientID};
                     @patient->{SNILS} := @thisPatnt-> {SNILS / Snils};
                     @patient->{lastName} := @thisPatnt->{LastName};
@@ -56,7 +56,7 @@ begin(snils, status, qrPats,patient,err,ex) // dt,dtEhr,
                 end
                 else 
                 begin()
-                    @status:=206;
+                    @status:=208;
                     @err := new MP.ERROR();
                     @err -> {code} := "02";
                     @err-> {message} := "Не найден пациент по указанному СНИЛС";
@@ -64,7 +64,7 @@ begin(snils, status, qrPats,patient,err,ex) // dt,dtEhr,
                 end;
             end
             else begin() //-- КРИВОЙ СНИЛС
-                @status:=206;
+                @status:=207;
                 @err := new MP.ERROR();
                 @err -> {code} := "01";
                 @err-> {message} := "Параметр snils имеет неверный формат";
