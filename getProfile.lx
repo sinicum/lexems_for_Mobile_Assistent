@@ -1,4 +1,4 @@
-// 
+// Данные по пациенту /getProfile
 begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
     
     try 
@@ -46,8 +46,10 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
                 // ,{AddressLegal / HouseGUID}
                 ,{AddressReal / FreeAddressString}
                 ,{AddressLegal / FreeAddressString}
-                ,{Registration / LpuMain / Name}
-                ,{Registration / LpuMain / EhrRusMdr308 / oid}
+                //,{Registration / LpuMain / Name}
+                //,{Registration / LpuMain / EhrRusMdr308 / oid}
+                ,{Registration / State / StateNumber}
+                ,{Registration / State / Division / Branch / LpuID}            
 
                 // ,{PhoneNumbers / PhoneType}
                 // ,{PhoneNumbers / Number} 
@@ -97,6 +99,7 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
             // {id};{SNILS};{lastName};{firstName};{middleName};{birthDate};{gender};{docType};{docSer};{docNum};{docDate};{docOrg};{polisType};{polSer};{polNum};{insCode};{insName};{phones};{address1};{address2};{error / code};{error / message}
             //$throw ("йцввйцвйцвйв");
             // @patProfile := new MP.PATIENT_PROFILE();
+            
 
             if (@qrPats->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
             foreach(thisPatnt in @qrPats)
@@ -142,6 +145,8 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
                 // if(@thisPatnt->{Registration / LpuMain / EhrRusMdr308 / oid}<>Null()) @patProfile->{regMOoid} := @thisPatnt->{Registration / LpuMain / EhrRusMdr308 / oid};
                 // if(@thisPatnt->{Registration / LpuMain / Name}<>Null()) @patProfile->{regMOname} := @thisPatnt->{Registration / LpuMain / Name};
 
+                @patProfile->{attachBranchId} := @thisPatnt-> {Registration / State / Division / Branch / LpuID}; // идентификатор СТП
+                @patProfile->{attachState} := @thisPatnt-> {Registration / State / Division / Branch / LpuID};    // номер участка
 
                 @parents := @thisPatnt ->{PatientParents};
                 //$throw (str(@parents-> count()));
