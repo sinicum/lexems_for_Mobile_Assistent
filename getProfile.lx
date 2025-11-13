@@ -48,8 +48,8 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
                 ,{AddressLegal / FreeAddressString}
                 //,{Registration / LpuMain / Name}
                 //,{Registration / LpuMain / EhrRusMdr308 / oid}
+                ,{Registration / State / Division / Branch / LpuID}    
                 ,{Registration / State / StateNumber}
-                ,{Registration / State / Division / Branch / LpuID}            
 
                 // ,{PhoneNumbers / PhoneType}
                 // ,{PhoneNumbers / Number} 
@@ -145,8 +145,8 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
                 // if(@thisPatnt->{Registration / LpuMain / EhrRusMdr308 / oid}<>Null()) @patProfile->{regMOoid} := @thisPatnt->{Registration / LpuMain / EhrRusMdr308 / oid};
                 // if(@thisPatnt->{Registration / LpuMain / Name}<>Null()) @patProfile->{regMOname} := @thisPatnt->{Registration / LpuMain / Name};
 
-                @patProfile->{attachBranchId} := @thisPatnt-> {Registration / State / Division / Branch / LpuID}; // идентификатор СТП
-                @patProfile->{attachState} := @thisPatnt-> {Registration / State / Division / Branch / LpuID};    // номер участка
+                @patProfile->{attachBranchId} := @thisPatnt-> {Registration / State / Division / Branch / LpuID};   // идентификатор СТП
+                @patProfile->{attachState} := @thisPatnt-> {Registration / State / StateNumber};                    // номер участка
 
                 @parents := @thisPatnt ->{PatientParents};
                 //$throw (str(@parents-> count()));
