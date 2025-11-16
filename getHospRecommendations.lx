@@ -25,10 +25,13 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
         if (str(@patID)<>"")
         begin()
             @qrEmergEvent := query top 1 {EventID},{EventDate}
+                                        ,{MedicalExaminations / Post / Worker / FIO}
                                         ,{MedicalExaminations / Recomendations}
                                         ,{MedicalExaminations / ExaminationDate}
                                         ,{MedicalExaminations / ExaminationTime}
                                         ,{EpicrissCollection / Recomendation}
+                                        ,{EpicrissCollection / PostingDate} 
+                                        ,{EpicrissCollection / Post / Worker / FIO}
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID and {CloseDate} = Null()
                             and (ChildExists({MedicalExaminations}, {Recomendations} <> Null()) or ChildExists({EpicrissCollection}, {Recomendation} <> Null()))
@@ -50,17 +53,19 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
                         @Recom -> {Type} := "Осмотр";
                         @Recom -> {DateTime} := str(Cast(Str(@ME->{ExaminationDate},"yyyy-MM-dd")+ " "+ Str(@ME->{ExaminationTime},"HH:mm:ss"), "DateTime"));
                         @Recom -> {Recommendation} := str(@ME -> {Recomendations});
+                        @Recom -> {Post} := @ME -> {Post / Worker / FIO};
                         @HospRecommsList -> {Recommendations} -> Add(@Recom);
                     end;
 
                     //Рекомендации из Эпикризов !!!
                     foreach(Epicris in @thisqrEmergEvent->{EpicrissCollection})
-                    if (str(@ME -> {Recomendations})<>"")
+                    if (str(@Epicris -> {Recomendation})<>"")
                     begin(Recom)
                         @Recom := new MP.RECOM();
                         @Recom -> {Type} := "Эпикриз";
-                        @Recom -> {DateTime} := str(Cast(Str(@ME->{ExaminationDate},"yyyy-MM-dd")+ " "+ Str(@ME->{ExaminationTime},"HH:mm:ss"), "DateTime"));
-                        @Recom -> {Recommendation} := str(@ME -> {Recomendations});
+                        @Recom -> {DateTime} := str(Cast(Str(@Epicris->{PostingDate},"yyyy-MM-dd")+ " "+ Str(@ME->{ExaminationTime},"HH:mm:ss"), "DateTime"));
+                        @Recom -> {Recommendation} := str(@Epicris -> {Recomendation});
+                        @Recom -> {Post} := @Epicris -> {Post / Worker / FIO};
                         @HospRecommsList -> {Recommendations} -> Add(@Recom);
                     end;
                 end;
