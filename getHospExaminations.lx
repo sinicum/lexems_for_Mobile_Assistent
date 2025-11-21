@@ -80,6 +80,7 @@ begin(patID, examID, HospExamsList, qrEmergEvent ,status, err)
                                  where {CardNote / AmbulanceCardRecord} = @MEID;
                         
                         foreach (CN in @qrCNF) //(CN in @ME->{CardNotes})
+                        // тут лучше завяязаться на Тип документа напрямую, т.к. сейчас неоднозначно
                         if(@CN->{CardNote / ObjectProperties / ObjectTypeID} IS "AKUZ.CN_CDA_EXAMINATION_ATTENDING_DOCTOR") // СЭМД 191 - Осмотр лечащим врачом...(CDA) Редакция 1
                         begin(SEMD)
 
