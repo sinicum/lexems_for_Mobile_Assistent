@@ -103,11 +103,10 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
             @status := 206;        
         end;
         
+        @response.StatusCode:=@status;
         @HospRecommsList := Replace(Str(@HospRecommsList,"Json"),"\"flags_\":\"1\",","");
         // print(@HospRecommsList);
         return(@HospRecommsList);
-
-        @response.StatusCode:=@status;
 
     end
     catch(ex)
