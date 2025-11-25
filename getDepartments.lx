@@ -45,7 +45,7 @@ begin(moList, attach, qrMos, qrBranches, moList,moAdr,moCnts,ms,bo,arr,str)
         @moMain->{OID} := @thisMo -> {EhrRusMdr308 / oid};
         //-- если указан параметр attach, то выполняется запрос количества прикрепленного населения для МО
         if(@attach <> Null()) @attached := select COUNT() from "AKUZ.AMBULANCE_CARD" where {State / LpuMain / LpuID} = @moID; 
-        if (@attached <> Null()) @moMain->{attached} := @attached[0][0]; //-- если запрос выше вернул значение больше 0
+            if (@attached <> Null()) @moMain->{attached} := @attached[0][0]; //-- если запрос выше вернул значение больше 0
         @moMain->{parentId} := Null();
         if(@thisMo->{NameFull}<>Null()) @moMain->{fullname} := @thisMo->{NameFull};
         @moMain->{shortname} := @thisMo->{Name};
@@ -67,9 +67,10 @@ begin(moList, attach, qrMos, qrBranches, moList,moAdr,moCnts,ms,bo,arr,str)
     //------- Филиалы по BRANCH -------//
     @qrBranches := query {LpuID},{LpuMain / LpuID},{NameFull},{Name},{Address / DisplayName},{AddressString},{Category},{Latitude},{Longitude},{RegistryPhones},{Email},{Site}
                 from "AKUZ.BRANCH" 
-                where {LpuMain / LpuSettings} <> Null() 
+                where {LpuMain / LpuSettings} <> Null()
                     and {LpuMain / EhrRusMdr308 / oid} <> Null() 
-                    and {LpuSettings} <> Null()  ;
+                    //and {LpuSettings} <> Null()  
+                    ;
 
     foreach(thisMo in @qrBranches) 
     begin(moMain)
