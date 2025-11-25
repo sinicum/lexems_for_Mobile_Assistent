@@ -11,7 +11,10 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
     //     "EventDate": "2025-07-21"
     //     "Recommendations": [
     //         {
-    //             "Recommendation": "рекомендации тест"
+    //             "Type": "Осмотр",
+    //             "DateTime": "dd.MM.yyyy HH:mm",
+    //             "Recommendation": "рекомендации тест",
+    //             "Post": "Тестовый В.Б."
     //         }
     //     ]
     // }
@@ -88,9 +91,7 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
                     end;
                 end;
 
-
-
-            end                   
+            end
             else
             begin()
                 @HospRecommsList -> {error} := "Не найдены случаи госпитализации по указанному patId";
