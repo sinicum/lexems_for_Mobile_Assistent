@@ -1,7 +1,7 @@
 //  /findBySnils. Поиск по СНИЛС. Упрощенная структура
 begin(snils, status, qrPats,patient,err,ex)
 
-    try 
+    try
     begin()
 
         @snils := if(@querystring["snils"]="") Null() else @querystring["snils"];

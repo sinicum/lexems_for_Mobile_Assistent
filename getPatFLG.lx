@@ -54,7 +54,7 @@ begin(patID, qrPats, patFLG, status)
                     @patFLG->{error} := "Поиск по patID: пациент не найден";
                 end;
             end
-            else begin() //-- КРИВОЙ СНИЛС
+            else begin() //-- 
                 @status:=206;
                 @patFLG->{error} := "Параметр patID имеет неверный формат";
             end;

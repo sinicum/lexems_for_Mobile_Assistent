@@ -12,7 +12,7 @@ begin(patID, EntrsList, Entry, qrEntries ,status)
         if (RegularExpression("^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$", @patID) > 0) 
         begin()
 
-            if(@patID<>Null() and @patID<>"") 
+            if(@patID<>Null() and @patID<>"")
             begin()
 
                 //------- ENTRY_AMBULANCE -------//

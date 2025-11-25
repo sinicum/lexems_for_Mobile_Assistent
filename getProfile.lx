@@ -81,7 +81,7 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
             //    "docNum": "111111",         // номер документа
             //    "ENP": "1653240333000333",  // Единый номер полиса ОМС (16-ти значный)
             //    "addressReal": "string",    // адрес проживания
-            //    "attachBranchId": "string",  // идентификатор СТП
+            //    "attachBranchId": "string", // идентификатор СТП
             //    "attachState" : 99,         // номер участка
             //    "trustedPersons": [ 
             //        {
