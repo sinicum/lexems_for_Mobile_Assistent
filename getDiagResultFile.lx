@@ -1,16 +1,15 @@
 //--- метод /getDiagResultFile. Отдает результат исследования в файл PDF в Base64 {"content": "Base64text"}
 begin(resultID, qrDR, status, file1)
 
-    try 
+    try
     begin()
-        // 	Карпова Л.Э. (Врач клинической лабораторной диагностики)	27.08.2025	18:30		ГАУЗ Зеленодольская ЦРБ		№231037 Тестова Агата Николаевна 09.05.2020	Обращение 01.07.2025 - 	15.07.2024		Тестова Агата Николаевна	Поликлиника Врачей Общей Практики ( семейный врач )	A09.19.001|Д30 Исследование кала на скрытую кровь  1 этап			ГАУЗ Зеленодольская ЦРБ	172786
+
         @resultID :=  @querystring["resultId"];  // ТЕСТ 99
         @status := 200;
-
         @file1 := new MP.RESULT_FILE();
 
-        // if(@resultID<>Null() and @resultID<>"") 
-        // begin()
+        if (str(@resultID)<>"")
+        begin()
 
             @qrDR := query top 1 {MedicalRecordID} from "AKUZ.DIAGNOSTICS_RESULTS" 
                     where {MedicalRecordID}= @resultID;  // 
@@ -25,12 +24,7 @@ begin(resultID, qrDR, status, file1)
                 if (@qrFile ->Count()>0 )
                 begin()
 
-
-                    if (@qrFile->Count()>0)
-                        @file1->{content} := Str(@qrFile[0]->{Content},"Base64")
-                    else 
-                        @file1->{error} := "Рузультат отчета пустой";
-
+                    @file1->{content} := Str(@qrFile[0]->{Content},"Base64")
 
                     // ============== JSON структура  ==========
                     // {
@@ -38,21 +32,25 @@ begin(resultID, qrDR, status, file1)
                     //     "content": "base64text"
                     // }
 
-
                 end
                 else
                 begin()
                     @status:=206;
-                    @file1->{error} := "Не найдены проведенные исследования по данному идентификатору";
+                    @file1->{error} := "В указанном исследовании отсутствует прикрепленный файл";
                 end;
             
+            end
+            else
+            begin()
+                @status:=206;
+                @file1->{error} := "Не найдены проведенные исследования по данному идентификатору";
             end;
 
-        // end else 
-        // begin()
-        //     @status:=206;
-        //     @file1->{error} := "Не указан параметр patId";
-        // end;
+        end else 
+        begin()
+            @status:=206;
+            @file1->{error} := "Не указан параметр resultID";
+        end;
 
 
         
