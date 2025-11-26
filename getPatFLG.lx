@@ -1,5 +1,5 @@
 //  Метод /getPatFLG. Флюорография пациента
-begin(patID, qrPats, patFLG, status)
+begin(patID, qrPats, patFLG,qrFLGDiagRes, status)
     // Коды услуг, относящиеся к флюрографии (разделитель - |)
     // на тесте 99 :
     // A06.09.007|A06.09.008.001|A06.09.005.003|A06.09.007.002|A06.09.011|A06.09.005|A06.09.006|A06.09.006.001|2U32|G101|Д06|PH00000001|ДС08|ИДИОТ|
@@ -45,6 +45,26 @@ begin(patID, qrPats, patFLG, status)
                     @patFLG->{LastFgDate} := Str(@thisPatnt-> {LastFgDate},"yyyy-MM-dd");
                     @patFLG->{NextPrgDate} := Str(@thisPatnt-> {NextPrgDate},"yyyy-MM-dd");
                     @patFLG->{PrgContingent} := @thisPatnt-> {PrgContingent / Name};
+                    begin(patID, LastFgDate, qrFLGDiagRes)
+                        // из холдера ("A06.09.007","A06.09.008.001","A06.09.005.003","A06.09.007.002","A06.09.011","A06.09.005","A06.09.006","A06.09.006.001","2U45","A06.09.001","PH00000001","ПФ881","2U32","Д06","X0029")
+                        @patID := @thisPatnt-> {PatientID};
+                        @LastFgDate := @thisPatnt-> {LastFgDate};
+                        @qrFLGDiagRes := query top 1 {MedicalRecordID}
+                                            ,{As AKUZ.PRG_DIAGNOSTICS / PrgDecision / Name} // Заключение из ФЛГ
+                                            ,{Decision}                                     // Заключение из услуги с типом НЕ ФГЛ
+                                            ,{ResultDescription}                            // Результат из услуги с типом НЕ ФГЛ
+                                    from "AKUZ.DIAGNOSTICS_RESULTS"
+                                    where {Research / Code} IN ("A06.09.007","A06.09.008.001","A06.09.005.003","A06.09.007.002","A06.09.011","A06.09.005","A06.09.006","A06.09.006.001","2U45","A06.09.001","PH00000001","ПФ881","2U32","Д06","X0029") 
+                                        And ({As AKUZ.PRG_DIAGNOSTICS / PrgDecision / Name} <> Null() 
+                                                // Or {Decision} <> Null() 
+                                                // Or {ResultDescription} <> Null()
+                                            )
+                                        and  {PatientBase / PatientID} = @patID
+                                        and {PostingDate} = @LastFgDate;
+                        if (@qrFLGDiagRes ->Count()>0 )
+                            @patFLG->{PrgDecision} := @qrFLGDiagRes[0] -> {PrgDecision};
+                    end;
+    
 
                     //@patMain->{patients} -> Add(@patFLG);
                 end
