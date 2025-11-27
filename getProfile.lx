@@ -83,6 +83,7 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
             //    "addressReal": "string",    // адрес проживания
             //    "attachBranchId": "string", // идентификатор СТП
             //    "attachState" : 99,         // номер участка
+            //    "dispFlag" : 
             //    "trustedPersons": [ 
             //        {
             //            "parentSnils": "string",
@@ -103,9 +104,10 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
 
             if (@qrPats->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
             foreach(thisPatnt in @qrPats)
-            begin()
+            begin(patID,currYear,qrVisDate)
 
-                @patProfile->{id} := @thisPatnt-> {PatientID};
+                @patID := @thisPatnt-> {PatientID};
+                @patProfile->{id} := @patID;
                 if(@thisPatnt->{SNILS / Snils} <> "" and @thisPatnt->{SNILS / Snils}<>"              ") @patProfile->{SNILS} := @thisPatnt-> {SNILS / Snils};
                 @patProfile->{lastName} := @thisPatnt->{LastName};
                 @patProfile->{firstName} := @thisPatnt->{FirstName};
@@ -147,6 +149,24 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
 
                 @patProfile->{attachBranchId} := @thisPatnt-> {Registration / State / Division / Branch / LpuID};   // идентификатор СТП
                 @patProfile->{attachState} := @thisPatnt-> {Registration / State / StateNumber};                    // номер участка
+
+                @currYear := if (Cast(DatePart("Year", param(CURRENT_DATE)) - DatePart("Year", @thisPatnt->{Birthday}), "Int32") = 21 
+                    Or Cast(DatePart("Year", param(CURRENT_DATE)) - DatePart("Year", @thisPatnt->{Birthday}), "Int32") = 24 
+                    Or Cast(DatePart("Year", param(CURRENT_DATE)) - DatePart("Year", @thisPatnt->{Birthday}), "Int32") = 27 
+                    Or Cast(DatePart("Year", param(CURRENT_DATE)) - DatePart("Year", @thisPatnt->{Birthday}), "Int32") = 30 
+                    Or Cast(DatePart("Year", param(CURRENT_DATE)) - DatePart("Year", @thisPatnt->{Birthday}), "Int32") = 33 
+                    Or Cast(DatePart("Year", param(CURRENT_DATE)) - DatePart("Year", @thisPatnt->{Birthday}), "Int32") = 36 
+                    Or Cast(DatePart("Year", param(CURRENT_DATE)) - DatePart("Year", @thisPatnt->{Birthday}), "Int32") >= 39) True else False;
+
+                @qrVisDate := query top 1 {VisitDate} from "AKUZ.DOCTOR_VISIT" 
+                where {VisitPurpose} = new Guid("e27d1f3f-ade4-4a19-82d5-14b82a376d75")
+                And {AmbulanceEvent / AmbulanceCard / Patient / PatientID} = @patID
+                order by {VisitDate} desc;
+
+                // And DatePart("Year", {VisitDate}) = Cast(DatePart("Year", param(CURRENT_DATE)), "Int32") 
+                @patProfile->{dispFlag} := @currYear;
+                if(@qrVisDate -> Count()>0)
+                    @patProfile->{dispDate} := Str(@qrVisDate[0]->{VisitDate},"yyyy-MM-dd");
 
                 @parents := @thisPatnt ->{PatientParents};
                 //$throw (str(@parents-> count()));
