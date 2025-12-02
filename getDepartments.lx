@@ -1,5 +1,5 @@
 // Метод /getDepartments - Отдаем список МО и Филиалов
-begin(moList, attach, qrMos, qrBranches, moList,moAdr,moCnts,ms,bo,arr,str) 
+begin(status, moList, attach, qrMos, qrBranches, moList,moAdr,moCnts,ms,bo,arr,str) 
 
     //{
     //    "Organizations": [
@@ -12,6 +12,7 @@ begin(moList, attach, qrMos, qrBranches, moList,moAdr,moCnts,ms,bo,arr,str)
     //            "type": "Юридическое лицо",                       // Тип подразделения (для МО: «Юридический» , для филиалов: Стационар / Поликлиника / ФАП / Амбулатория)
     //            "inn": "1643002863",                              // ИНН
     //            "ogrn": "1001601569980",                          // ОГРН
+    //            "phone": "8(843)221-39-03"                        // Телефон
     //            "address": [
     //                {
     //                    "type": "Юридический",                    // для МО: «Юридический»,  для филиалов «Фактический»
@@ -22,79 +23,102 @@ begin(moList, attach, qrMos, qrBranches, moList,moAdr,moCnts,ms,bo,arr,str)
     //    ]
     //}
 
-    //@str := "[";
-    @moList := new MP.MO_LIST();
+    try
+    begin()
 
-    @attach := @querystring["attach"]; //--
+        //@snils := if(@querystring["snils"]="") Null() else @querystring["snils"];
+        @status := 200;
+        //@str := "[";
+        //$throw("йцуйцу");
+        @moList := new MP.MO_LIST();
 
-    //------- МО-шки по LPU_MAIN -------//
-    //-- "585a2851-e999-40a6-8979-79aecbfc2e89" - "ГАУЗ \"ГКБ №7 им. М.Н.Садыкова\""
-    @qrMos := query {LpuID},{EhrRusMdr308 / oid},{LpuCode},{NameFull},{Name},{InnCode},{KppCode},{OGRNCode},{Address/DisplayName},{AddressString},{Phone}
-            from "AKUZ.LPU_MAIN" 
-            where {LpuSettings} <> Null()
-                and {EhrRusMdr308 / oid} <> Null() ;
-    if (@qrMos->Count()=0) return();
-    //@moList := new List();
-    //@moList := new TIS.MO_LIST();
-    foreach(thisMo in @qrMos)
-    begin(moMain, attached, moID)
-    
+        @attach := @querystring["attach"]; //--
+
+        //------- МО-шки по LPU_MAIN -------//
+        //-- "585a2851-e999-40a6-8979-79aecbfc2e89" - "ГАУЗ \"ГКБ №7 им. М.Н.Садыкова\""
+        @qrMos := query {LpuID},{EhrRusMdr308 / oid},{LpuCode},{NameFull},{Name},{InnCode},{KppCode},{OGRNCode},{Address/DisplayName},{AddressString},{Phone}
+                from "AKUZ.LPU_MAIN" 
+                where {LpuSettings} <> Null()
+                    and {EhrRusMdr308 / oid} <> Null() ;
+        if (@qrMos->Count()=0) return();
+        foreach(thisMo in @qrMos)
+        begin(moMain, attached, moID)
+        
+            @moMain := new MP.MO_MAIN();
+            @moID := @thisMo -> {LpuID};
+            @moMain->{id} := @moID;
+            @moMain->{OID} := @thisMo -> {EhrRusMdr308 / oid};
+            //-- если указан параметр attach, то выполняется запрос количества прикрепленного населения для МО
+            if(@attach <> Null()) @attached := select COUNT() from "AKUZ.AMBULANCE_CARD" where {State / LpuMain / LpuID} = @moID; 
+                if (@attached <> Null()) @moMain->{attached} := @attached[0][0]; //-- если запрос выше вернул значение больше 0
+            @moMain->{parentId} := Null();
+            if(@thisMo->{NameFull}<>Null()) @moMain->{fullname} := @thisMo->{NameFull};
+            @moMain->{shortname} := @thisMo->{Name};
+            @moMain->{type} := "Юридическое лицо";
+            if(@thisMo->{InnCode}<>Null()) @moMain->{inn} := @thisMo->{InnCode};
+            if(@thisMo->{KppCode}<>Null()) @moMain->{kpp} := @thisMo->{KppCode};
+            if(@thisMo->{OGRNCode}<>Null() and @thisMo->{OGRNCode}<>"" ) @moMain->{ogrn} := @thisMo->{OGRNCode};
+            if(@thisMo->{Phone}<>Null()) @moMain->{phone} := @thisMo->{Phone};
+                // address
+                if(@thisMo->{Address}<>Null() or @thisMo->{AddressString}<>Null()) begin()
+                @moAdr := new MP.MO_ADDRESS();
+                    @moAdr->{type} :="Юридический";
+                    @moAdr->{display} := if(@thisMo->{Address}<>Null()) @thisMo->{Address / DisplayName} else @thisMo->{AddressString};
+                    @moMain->{address} -> Add(@moAdr);
+                end;
+                @moList -> {Organizations} -> Add(@moMain);
+
+        end;
+
+        //------- Филиалы по BRANCH -------//
+        @qrBranches := query {LpuID},{LpuMain / LpuID},{NameFull},{Name},{Address / DisplayName},{AddressString},{Category},{Latitude},{Longitude},{RegistryPhones},{Email},{Site}
+                    from "AKUZ.BRANCH" 
+                    where {LpuMain / LpuSettings} <> Null()
+                        and {LpuMain / EhrRusMdr308 / oid} <> Null() 
+                        //and {LpuSettings} <> Null()  
+                        ;
+
+        foreach(thisMo in @qrBranches) 
+        begin(moMain)
         @moMain := new MP.MO_MAIN();
-        @moID := @thisMo -> {LpuID};
-        @moMain->{id} := @moID;
-        @moMain->{OID} := @thisMo -> {EhrRusMdr308 / oid};
-        //-- если указан параметр attach, то выполняется запрос количества прикрепленного населения для МО
-        if(@attach <> Null()) @attached := select COUNT() from "AKUZ.AMBULANCE_CARD" where {State / LpuMain / LpuID} = @moID; 
-            if (@attached <> Null()) @moMain->{attached} := @attached[0][0]; //-- если запрос выше вернул значение больше 0
-        @moMain->{parentId} := Null();
-        if(@thisMo->{NameFull}<>Null()) @moMain->{fullname} := @thisMo->{NameFull};
-        @moMain->{shortname} := @thisMo->{Name};
-        @moMain->{type} := "Юридическое лицо";
-        if(@thisMo->{InnCode}<>Null()) @moMain->{inn} := @thisMo->{InnCode};
-        if(@thisMo->{KppCode}<>Null()) @moMain->{kpp} := @thisMo->{KppCode};
-        if(@thisMo->{OGRNCode}<>Null() and @thisMo->{OGRNCode}<>"" ) @moMain->{ogrn} := @thisMo->{OGRNCode};
-            // address
-            if(@thisMo->{Address}<>Null() or @thisMo->{AddressString}<>Null()) begin()
-            @moAdr := new MP.MO_ADDRESS();
-                @moAdr->{type} :="Юридический";
-                @moAdr->{display} := if(@thisMo->{Address}<>Null()) @thisMo->{Address / DisplayName} else @thisMo->{AddressString};
-                @moMain->{address} -> Add(@moAdr);
-            end;
-            @moList -> {Organizations} -> Add(@moMain);
+            @moMain->{id} := @thisMo->{LpuID};
+            @moMain->{parentId} := @thisMo->{LpuMain / LpuID};
+            if(@thisMo->{NameFull}<>Null()) @moMain->{fullname} := @thisMo->{NameFull};
+            @moMain->{shortname} := @thisMo->{Name};
+            @moMain->{type} := Str(@thisMo->{Category});
+            if(@thisMo->{RegistryPhones}<>Null()) @moMain->{phone} := @thisMo->{RegistryPhones};
+                // address
+                if(@thisMo->{Address}<>Null() or @thisMo->{AddressString}<>Null()) begin()
+                @moAdr := new MP.MO_ADDRESS();
+                    @moAdr->{type} :="Фактический";
+                    @moAdr->{display} := if(@thisMo->{Address}<>Null()) @thisMo->{Address / DisplayName} else @thisMo->{AddressString};
+                    if(@thisMo->{Latitude}<>Null()) @moAdr->{latitude} := @thisMo->{Latitude};
+                    if(@thisMo->{Longitude}<>Null()) @moAdr->{longitude} := @thisMo->{Longitude};
+                    @moMain->{address} -> Add(@moAdr);
+                end;
+                @moList -> {Organizations} -> Add(@moMain); 
+
+
+        end;
+
+        @response.StatusCode:=@status;
+        return(@moList);
+
+    end
+    catch(ex)
+    begin(err)
+
+        @err := @ex->{InnerException};
+        // $throw(@err);
+
+        // while (RegExMatch("--> ", @err, "All")->Count()-1>0 )
+        //      @err := SubString(@err,IndexOf(@err,"--> ")+4,StringLen(@err));
+        // @err := SubString(@err,IndexOf(@err,":")+2,IndexOf(@err,Char(13))-IndexOf(@err,":")-2 );
+
+        @moList->{error} := @err;
+        @response.StatusCode := 500;
+        return(@moList);
 
     end;
-
-    //------- Филиалы по BRANCH -------//
-    @qrBranches := query {LpuID},{LpuMain / LpuID},{NameFull},{Name},{Address / DisplayName},{AddressString},{Category},{Latitude},{Longitude},{RegistryPhones},{Email},{Site}
-                from "AKUZ.BRANCH" 
-                where {LpuMain / LpuSettings} <> Null()
-                    and {LpuMain / EhrRusMdr308 / oid} <> Null() 
-                    //and {LpuSettings} <> Null()  
-                    ;
-
-    foreach(thisMo in @qrBranches) 
-    begin(moMain)
-    @moMain := new MP.MO_MAIN();
-        @moMain->{id} := @thisMo->{LpuID};
-        @moMain->{parentId} := @thisMo->{LpuMain / LpuID};
-        if(@thisMo->{NameFull}<>Null()) @moMain->{fullname} := @thisMo->{NameFull};
-        @moMain->{shortname} := @thisMo->{Name};
-        @moMain->{type} := Str(@thisMo->{Category});
-            // address
-            if(@thisMo->{Address}<>Null() or @thisMo->{AddressString}<>Null()) begin()
-            @moAdr := new MP.MO_ADDRESS();
-                @moAdr->{type} :="Фактический";
-                @moAdr->{display} := if(@thisMo->{Address}<>Null()) @thisMo->{Address / DisplayName} else @thisMo->{AddressString};
-                if(@thisMo->{Latitude}<>Null()) @moAdr->{latitude} := @thisMo->{Latitude};
-                if(@thisMo->{Longitude}<>Null()) @moAdr->{longitude} := @thisMo->{Longitude};
-                @moMain->{address} -> Add(@moAdr);
-            end;
-            @moList -> {Organizations} -> Add(@moMain); 
-
-
-    end;
-
-    //@response.StatusCode:=@status;
-    return(@moList);
 
 end
