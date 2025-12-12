@@ -80,6 +80,7 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
             //    "docSer": "11 11",          // серия документа
             //    "docNum": "111111",         // номер документа
             //    "ENP": "1653240333000333",  // Единый номер полиса ОМС (16-ти значный)
+            //    "phones"
             //    "addressReal": "string",    // адрес проживания
             //    "attachBranchId": "string", // идентификатор СТП
             //    "attachState" : 99,         // номер участка
@@ -126,15 +127,15 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
                 // if(@thisPatnt->{DocIssueDate}<>Null()) @patProfile->{docDate} := @thisPatnt->Str({DocIssueDate},"yyyy-MM-dd");
                 // if(@thisPatnt->{DocIssueOrg}<>Null()) @patProfile->{docOrg} := @thisPatnt->{DocIssueOrg};
 
+                if(@thisPatnt->{OmsPolicy / Number}<>Null()) @patProfile->{ENP} := @thisPatnt->{OmsPolicy / Number};
                 // if(@thisPatnt->{OmsPolicy / Serial}<>Null()) @patProfile->{polSer} := @thisPatnt->{OmsPolicy / Serial};
                 // if(@thisPatnt->{OmsPolicy / Number}<>Null()) @patProfile->{polNum} := @thisPatnt->{OmsPolicy / Number};
                 //if(@thisPatnt->{OmsPolicy / Number}<>Null()) @patProfile->{polisOms} := IsNull(@thisPatnt->{OmsPolicy / Serial},"",@thisPatnt->{OmsPolicy / Serial}+"|") + @thisPatnt->{OmsPolicy / Number};
                 // if(@thisPatnt->{OmsPolicy / PolicyForm}<>Null()) @patProfile->{polisType} := @thisPatnt->{OmsPolicy / PolicyForm};
-                
                 // if(@thisPatnt->{OmsPolicy / InsuranceCompany} <>Null()) @patProfile->{insCode} := (if (@thisPatnt->{OmsPolicy / InsuranceCompany / Code} = "99") @thisPatnt->{OmsPolicy / Insurer / SmoCod} else @thisPatnt->{OmsPolicy / InsuranceCompany / Insurer / SmoCod});
                 // if(@thisPatnt->{OmsPolicy / InsuranceCompany} <>Null()) @patProfile->{insName} := (if (@thisPatnt->{OmsPolicy / InsuranceCompany / Code} = "99") @thisPatnt->{OmsPolicy / Insurer / ShortName} else @thisPatnt->{OmsPolicy / InsuranceCompany / Insurer / ShortName});
 
-                // if(@thisPatnt->{PhoneNumbersString}<>Null()) @patProfile->{phones} := @thisPatnt->{PhoneNumbersString};
+                if(@thisPatnt->{PhoneNumbersString}<>Null()) @patProfile->{phones} := @thisPatnt->{PhoneNumbersString};
                 // addressReal - Проживание
                 @patProfile->{addressReal} := if (@thisPatnt->{AddressReal / FreeAddressString} <> "") @thisPatnt->{AddressReal / FreeAddressString} else  @thisPatnt->{AddressReal/DisplayName};
                 //-- addr1_houseguid
