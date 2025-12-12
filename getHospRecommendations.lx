@@ -59,22 +59,22 @@ begin(patID, HospRecommsList, qrEmergEvent ,status)
                         @Recom -> {Post} := @ME -> {Post / Worker / FIO};
                         @HospRecommsList -> {Recommendations} -> Add(@Recom);
 
-                        @MEID := @ME -> {MedicalRecordID};
-                        @qrCN := query top 1 {MedicalRecordID},{ObjectProperties / ObjectTypeID}
-                                 from "AKUZ.CARD_NOTE" 
-                                 where {AmbulanceCardRecord} = @MEID;
+                        // @MEID := @ME -> {MedicalRecordID};
+                        // @qrCN := query top 1 {MedicalRecordID},{ObjectProperties / ObjectTypeID}
+                        //          from "AKUZ.CARD_NOTE" 
+                        //          where {AmbulanceCardRecord} = @MEID;
                         
-                        foreach (CN in @qrCN) //(CN in @ME->{CardNotes})
-                        // тут лучше завяязаться на Тип документа напрямую, т.к. сейчас неоднозначно
-                        if(@CN->{ObjectProperties / ObjectTypeID} IS "AKUZ.CN_CDA_EXAMINATION_ATTENDING_DOCTOR") // СЭМД 191 - Осмотр лечащим врачом...(CDA) Редакция 1
-                        begin(SEMD)
+                        // foreach (CN in @qrCN) //(CN in @ME->{CardNotes})
+                        // // тут лучше завяязаться на Тип документа напрямую, т.к. сейчас неоднозначно
+                        // if(@CN->{ObjectProperties / ObjectTypeID} IS "AKUZ.CN_CDA_EXAMINATION_ATTENDING_DOCTOR") // СЭМД 191 - Осмотр лечащим врачом...(CDA) Редакция 1
+                        // begin(SEMD)
 
-                            @SEMD := new MP.SEMD();
-                            @SEMD -> {SEMDID} := @CN ->{MedicalRecordID}; // без Str() - тип System.Byte[] // UnzipByteArray
+                        //     @SEMD := new MP.SEMD();
+                        //     @SEMD -> {SEMDID} := @CN ->{MedicalRecordID}; // без Str() - тип System.Byte[] // UnzipByteArray
 
-                            @Recom -> {SEMDs} -> Add(@SEMD);
-                            //$throw (Str(@SEMD,"Json"));
-                        end;
+                        //     @Recom -> {SEMDs} -> Add(@SEMD);
+                        //     //$throw (Str(@SEMD,"Json"));
+                        // end;
 
                     end;
 
