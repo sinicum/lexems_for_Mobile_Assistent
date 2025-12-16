@@ -3,18 +3,18 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
 
 
     declare MP.POST_EVENTID(
-        patId:string
+        patID:string
         ,eventId:string
-        ,dateTime:DateTime
+        ,datetime:DateTime
         ,MO_id:string
         );
     // --------- ЗАПРОС
-    // {
-    //     "patId": "5a62519c-e9d7-4e3e-b1d9-d89af8e57f4e",
-    //     "eventId": "86a671b0-75fa-4ca5-af33-6813387adc6f",
-    //     "dateTime": "2025-07-25T16:38:30",
-    //     "MO_id": "585a2851-e999-40a6-8979-79aecbfc2e89"
-    // }
+    //{
+    //    "patID":"9a4d4b06-5928-4101-b95e-e5ba03a1abfd", // Даниил
+    //    "eventId": "eventId",
+    //    "datetime": "2025-07-15",
+    //    "MO_id": "string"
+    //}
 
     declare MP.COMPLAINT_RESPONSE(
         patId:string
@@ -32,16 +32,16 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
 
     @body := new MP.POST_EVENTID();
 
-    @body -> {patId} := @objProc->{AmbulanceCard / Patient / PatientID};
+    @body -> {patID} := @objProc->{AmbulanceCard / Patient / PatientID};
     @body -> {eventId}:= @objProc->{EventID};
-    @body -> {dateTime} := Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm:ss"); // param(CURRENT_DATE_TIME); //
+    @body -> {datetime} := Str(param(CURRENT_DATE_TIME),"yyyy-MM-dd HH:mm:ss"); // param(CURRENT_DATE_TIME); //
     @body -> {MO_id} := @objProc->{AmbulanceCard / CardLpu / LpuID} ;
 
     @headers:= new Hashtable();
     @headers["Content-Type"]:="application/json; charset=utf-8"; 
 
     // @address:="https://medapi.miwory.ru/v1/vitacore/hospComplaint"; 
-    @address:="https://gist-test-rmis.ezdrav.ru:8899/MP_API/hospComplaint";
+    @address:="https://med-assistant.tatar.ru/api/v1/vitacore/hospComplaint";
 
     //////----- сохранение запроса в RABBIT_SEND_OBJECT ----///////
     @json:=Replace(Str(@body,"Json"),"\"flags_\":\"1\",","");
@@ -51,7 +51,7 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
     @rso -> {QueueName}:= @address;
     @rso -> {Content}:= @json;
     @rso -> {RoutingKey}:="";
-    @rso -> {Type}:="TEST_COMPLAINT_REQUEST";
+    @rso -> {Type}:="MP_COMPLAINT_REQUEST";
     @rso -> {State}:=1;
     @rso -> {ContentEncoding}:="utf-8";
     @rso -> {CreateDateTime}:= param(CURRENT_DATE_TIME);
@@ -61,8 +61,10 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
     try
     begin() ////---- Отправка запроса 
 
-        // CURL пример отрабатывает:
+        // CURL пример на тест РТ 99:
         //curl -v -H "Content-Type: application/json; charset=utf-8" -H "Host: gist-test-rmis.ezdrav.ru:8899" -d "{\"patID\":\"5a62519c-e9d7-4e3e-b1d9-d89af8e57f4e\",\"eventID\":\"86a671b0-75fa-4ca5-af33-6813387adc6f\",\"dateTime\":\"2025-07-25T16:38:30\",\"MO_id\":\"585a2851-e999-40a6-8979-79aecbfc2e89\"}" https://gist-test-rmis.ezdrav.ru:8899/MP_API/hospComplaint 
+        // CURL на проде:
+        //curl -v -H "Content-Type: application/json; charset=utf-8" -H "Host: med-assistant.tatar.ru" -d "{\"patID\":\"9a4d4b06-5928-4101-b95e-e5ba03a1abfd\",\"eventId\": \"eventId\",\"datetime\": \"2025-07-15\",\"MO_id\": \"string\"}" https://med-assistant.tatar.ru/api/v1/vitacore/hospComplaint
 
         @response := $Send POST Request to @address with headers @headers data @body {patId}
             ,{eventId}
@@ -76,7 +78,8 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
         @jsonIN := Replace(str(@result["Body"],"Json"),"\"flags_\":\"1\",",""); // весь ответ в строке в json
 
         // отправляем обратно на клиент ответ
-        @processOutput["complaints"] :=  @result["Body"] -> {complaints};
+        @processOutput["complaints"] := @result["Body"] -> {complaints};
+        @processOutput["statusCode"] := @statusCode ;
 
     end
     catch(ex)
@@ -95,7 +98,7 @@ begin(objProc, body, headers, address, json, rso, response,result,statusCode,sta
     @rso -> {QueueName}:=@address;
     @rso -> {Content}:=@jsonIN;
     @rso -> {RoutingKey}:=IsNull(@statusCode,"Error");
-    @rso -> {Type}:="TEST_COMPLAINT_RESPONSE";
+    @rso -> {Type}:="MP_COMPLAINT_RESPONSE";
     @rso -> {State}:=1;
     @rso -> {ContentEncoding}:="utf-8";
     @rso -> {CreateDateTime}:= param(CURRENT_DATE_TIME);
