@@ -14,6 +14,7 @@ begin(patID, qrPats, patFLG,qrFLGDiagRes, status)
         //     "LastFgDate": "2020-09-24",      // Дата последнего флюрографического осмотра
         //     "NextPrgDate": "2021-09-24",     // Дата следующего флюорографического осмотр
         //     "PrgContingent": "Пенсионер"     // Контингент (флюорография)
+        //     "PrgDecision": "Требует дообследования(флюорография)" // Заключение с формы ФЛГ (PrgDecision)
         // }
 
     try 
@@ -34,7 +35,7 @@ begin(patID, qrPats, patFLG,qrFLGDiagRes, status)
                                     ,{NextPrgDate}
                                     ,{PrgContingent / Name}
                                     
-                from "AKUZ.PATIENT" where {PatientID} = @patID;
+                            from "AKUZ.PATIENT" where {PatientID} = @patID;
 
                 if (@qrPats->Count()>0 )  //----- НАЙДЕНЫ ЛИ ПАЦИЕНТЫ ------//
                 foreach(thisPatnt in @qrPats) begin(patient)
@@ -50,6 +51,7 @@ begin(patID, qrPats, patFLG,qrFLGDiagRes, status)
                         @patID := @thisPatnt-> {PatientID};
                         @LastFgDate := @thisPatnt-> {LastFgDate};
                         @qrFLGDiagRes := query top 1 {MedicalRecordID}
+                                            ,{Post / Worker / FIO}                          // Врач
                                             ,{As AKUZ.PRG_DIAGNOSTICS / PrgDecision / Name} // Заключение из ФЛГ
                                             ,{Decision}                                     // Заключение из услуги с типом НЕ ФГЛ
                                             ,{ResultDescription}                            // Результат из услуги с типом НЕ ФГЛ
@@ -62,7 +64,16 @@ begin(patID, qrPats, patFLG,qrFLGDiagRes, status)
                                         and  {PatientBase / PatientID} = @patID
                                         and {PostingDate} = @LastFgDate;
                         if (@qrFLGDiagRes ->Count()>0 )
-                            @patFLG->{PrgDecision} := @qrFLGDiagRes[0] -> {PrgDecision};
+                        begin()
+                            if ( @qrFLGDiagRes[0] -> {PrgDecision} <> Null())
+                                @patFLG->{PrgDecision} := @qrFLGDiagRes[0] -> {PrgDecision};
+                            if ( @qrFLGDiagRes[0] -> {Decision} <> Null())
+                                @patFLG->{Decision} := @qrFLGDiagRes[0] -> {Decision};
+                            if ( @qrFLGDiagRes[0] -> {ResultDescription} <> Null())
+                                @patFLG->{ResultDescription} := @qrFLGDiagRes[0] -> {ResultDescription};
+                            if ( @qrFLGDiagRes[0] -> {Post / Worker / FIO} <> Null())
+                                @patFLG->{Post} := @qrFLGDiagRes[0] -> {Post / Worker / FIO};
+                        end;
                     end;
     
 
