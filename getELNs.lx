@@ -39,17 +39,16 @@ begin(patID, patSNILS, ELNsMain, ELN, ELNprlngtion, qrMedCerts,MedCertProlongs,s
                                 ,{CardLpuName}
                                 ,{BranchAddressString}
 
-
                                 ,{FssLnStatus}
                                 ,{SentSNILS}
 
                 from "AKUZ.MEDICAL_CERTIFICATE" where {SentSNILS} = @patSNILS //where {AmbulanceCard / Patient / PatientID} = @patID 
-                    and ({FssLnStatus} = 10     // ЭЛН открыт
-                        Or {FssLnStatus} = 20   // ЭЛН продлен
-                        Or {FssLnStatus} = 30   // ЭЛН закрыт
-                        Or {FssLnStatus} = 40   // ЭЛН направление на МСЭ
-                        Or {FssLnStatus} = 50   // ЭЛН дополнен данными МСЭ
-                        )
+                    // and ({FssLnStatus} = 10     // ЭЛН открыт
+                    //     Or {FssLnStatus} = 20   // ЭЛН продлен
+                    //     Or {FssLnStatus} = 30   // ЭЛН закрыт
+                    //     Or {FssLnStatus} = 40   // ЭЛН направление на МСЭ
+                    //     Or {FssLnStatus} = 50   // ЭЛН дополнен данными МСЭ
+                    //     )
                 order by {OpenDate} desc;
 
 
