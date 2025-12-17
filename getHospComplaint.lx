@@ -15,6 +15,8 @@ begin(obj, p, po, statusCode)
     //         where {EventID} = "86a671b0-75fa-4ca5-af33-6813387adc6f";
     
     @p := new Process("GetComplaintFromMedAssistProcess",@obj);
+    @p -> {Parameters}["PatID"] := @obj->{AmbulanceCard / Patient / PatientID};
+    @p -> {Parameters}["EventID"] := @obj->{EventID};
     @po := @p -> Run();
 
     ////////////    
