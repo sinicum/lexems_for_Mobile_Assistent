@@ -1,5 +1,5 @@
 // Действие - Лексема Забирает Жалобы
-begin(obj, p, po, statusCode)
+begin(obj, p, po, statusCode, complaints, s2)
 {{AmbulanceCard / Patient / PatientID}
 ,{EventID}
 ,{AmbulanceCard / CardLpu / LpuID}
@@ -15,8 +15,8 @@ begin(obj, p, po, statusCode)
     //         where {EventID} = "86a671b0-75fa-4ca5-af33-6813387adc6f";
     
     @p := new Process("GetComplaintFromMedAssistProcess",@obj);
-    @p -> {Parameters}["PatID"] := @obj->{AmbulanceCard / Patient / PatientID};
-    @p -> {Parameters}["EventID"] := @obj->{EventID};
+    // @p -> {Parameters}["PatID"] := @obj->{AmbulanceCard / Patient / PatientID};
+    // @p -> {Parameters}["EventID"] := @obj->{EventID};
     @po := @p -> Run();
 
     ////////////    
@@ -25,8 +25,18 @@ begin(obj, p, po, statusCode)
     if(@po["err"]<>Null()) 
         $throw new ClientException(Str(@po["err"]),"Ошибка");
 
+    @complaints := @po["complaints"];
+    @s2 := SubString(@complaints,0,IndexOf(@complaints,"|"));
 
-    @obj -> {IncomingComplaints} := @po["complaints"];
+    @obj -> {IncomingComplaints} := @s2 ;
+
+    begin(str,mb,p)
+        @str := "Будут загружены данные из приложения Мобильный Ассистент.";
+        @mb := new MessageBoxInfo(@str, "ВНИМАНИЕ", 0,1);
+        @p := new Process("GenerateMessageBoxOnClient", @mb);
+        @p -> Run();
+    end;
+
     @obj -> Save();
     @owner.DoRefresh();
 
