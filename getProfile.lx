@@ -126,11 +126,6 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
                 // if(@thisPatnt->{DocNumber}<>Null()) @patProfile->{docNum} := @thisPatnt->{DocNumber};
 
 
-                // @patProfile->{docType} := @thisPatnt -> {DocType / Name};
-                // @patProfile->{docSer} := @thisPatnt->{DocSeries};
-                // @patProfile->{docNum} := @thisPatnt->{DocNumber};
-                // @patProfile->{ENP} := @thisPatnt->{OmsPolicy / Number};
-
                 if (@thisPatnt->{DocType / Name} <> "БЕЗ ДОКУМЕНТА") @patProfile->{docType} := @thisPatnt -> {DocType / Name} else @patProfile->{docType} :="";
                 if (@thisPatnt->{DocSeries}<>Null()) @patProfile->{docSer} := @thisPatnt->{DocSeries} else @patProfile->{docSer} :="";
                 if (@thisPatnt->{DocNumber}<>Null()) @patProfile->{docNum} := @thisPatnt->{DocNumber} else @patProfile->{docNum} :="";
