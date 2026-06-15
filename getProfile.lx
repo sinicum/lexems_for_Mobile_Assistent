@@ -120,17 +120,29 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
                 //     @dtEhr := (query top 1 {EhrRusNn5meatu5t / IdEHR} from "EHR.EHR_TYPE_MATCHING_DUL" where {DocType / EnumID} = @dt);
                 //     //-- 1.2.643.5.1.13.13.99.2.48 v6.2 // NN5MEATU5T //Документы, удостоверяющие личность;
                 // if (@dt <> 10599 and @dtEhr->Count()>0) @patProfile->{docType} := @dtEhr[0]->{EhrRusNn5meatu5t / IdEHR};
-                if (@thisPatnt->{DocType / Name} <> "БЕЗ ДОКУМЕНТА") @patProfile->{docType} := @thisPatnt -> {DocType / Name};
+                // if (@thisPatnt->{DocType / Name} <> "БЕЗ ДОКУМЕНТА") @patProfile->{docType} := @thisPatnt -> {DocType / Name};
 
-                if(@thisPatnt->{DocSeries}<>Null()) @patProfile->{docSer} := @thisPatnt->{DocSeries};
-                if(@thisPatnt->{DocNumber}<>Null()) @patProfile->{docNum} := @thisPatnt->{DocNumber};
+                // if(@thisPatnt->{DocSeries}<>Null()) @patProfile->{docSer} := @thisPatnt->{DocSeries};
+                // if(@thisPatnt->{DocNumber}<>Null()) @patProfile->{docNum} := @thisPatnt->{DocNumber};
+
+
+                // @patProfile->{docType} := @thisPatnt -> {DocType / Name};
+                // @patProfile->{docSer} := @thisPatnt->{DocSeries};
+                // @patProfile->{docNum} := @thisPatnt->{DocNumber};
+                // @patProfile->{ENP} := @thisPatnt->{OmsPolicy / Number};
+
+                if (@thisPatnt->{DocType / Name} <> "БЕЗ ДОКУМЕНТА") @patProfile->{docType} := @thisPatnt -> {DocType / Name} else @patProfile->{docType} :="";
+                if (@thisPatnt->{DocSeries}<>Null()) @patProfile->{docSer} := @thisPatnt->{DocSeries} else @patProfile->{docSer} :="";
+                if (@thisPatnt->{DocNumber}<>Null()) @patProfile->{docNum} := @thisPatnt->{DocNumber} else @patProfile->{docNum} :="";
+                if (@thisPatnt->{OmsPolicy / Number}<>Null()) @patProfile->{ENP} := @thisPatnt->{OmsPolicy / Number} else @patProfile->{ENP}:="";
+
                 // if(@thisPatnt->{DocIssueDate}<>Null()) @patProfile->{docDate} := @thisPatnt->Str({DocIssueDate},"yyyy-MM-dd");
                 // if(@thisPatnt->{DocIssueOrg}<>Null()) @patProfile->{docOrg} := @thisPatnt->{DocIssueOrg};
 
-                if(@thisPatnt->{OmsPolicy / Number}<>Null()) @patProfile->{ENP} := @thisPatnt->{OmsPolicy / Number};
+                // if(@thisPatnt->{OmsPolicy / Number}<>Null()) @patProfile->{ENP} := @thisPatnt->{OmsPolicy / Number};
                 // if(@thisPatnt->{OmsPolicy / Serial}<>Null()) @patProfile->{polSer} := @thisPatnt->{OmsPolicy / Serial};
                 // if(@thisPatnt->{OmsPolicy / Number}<>Null()) @patProfile->{polNum} := @thisPatnt->{OmsPolicy / Number};
-                //if(@thisPatnt->{OmsPolicy / Number}<>Null()) @patProfile->{polisOms} := IsNull(@thisPatnt->{OmsPolicy / Serial},"",@thisPatnt->{OmsPolicy / Serial}+"|") + @thisPatnt->{OmsPolicy / Number};
+                // if(@thisPatnt->{OmsPolicy / Number}<>Null()) @patProfile->{polisOms} := IsNull(@thisPatnt->{OmsPolicy / Serial},"",@thisPatnt->{OmsPolicy / Serial}+"|") + @thisPatnt->{OmsPolicy / Number};
                 // if(@thisPatnt->{OmsPolicy / PolicyForm}<>Null()) @patProfile->{polisType} := @thisPatnt->{OmsPolicy / PolicyForm};
                 // if(@thisPatnt->{OmsPolicy / InsuranceCompany} <>Null()) @patProfile->{insCode} := (if (@thisPatnt->{OmsPolicy / InsuranceCompany / Code} = "99") @thisPatnt->{OmsPolicy / Insurer / SmoCod} else @thisPatnt->{OmsPolicy / InsuranceCompany / Insurer / SmoCod});
                 // if(@thisPatnt->{OmsPolicy / InsuranceCompany} <>Null()) @patProfile->{insName} := (if (@thisPatnt->{OmsPolicy / InsuranceCompany / Code} = "99") @thisPatnt->{OmsPolicy / Insurer / ShortName} else @thisPatnt->{OmsPolicy / InsuranceCompany / Insurer / ShortName});
@@ -148,7 +160,7 @@ begin(patID, qrPats, patProfile, parents, parent, err,ex,status)
                 // if(@thisPatnt->{Registration / LpuMain / EhrRusMdr308 / oid}<>Null()) @patProfile->{regMOoid} := @thisPatnt->{Registration / LpuMain / EhrRusMdr308 / oid};
                 // if(@thisPatnt->{Registration / LpuMain / Name}<>Null()) @patProfile->{regMOname} := @thisPatnt->{Registration / LpuMain / Name};
 
-                @patProfile->{attachBranchId} := @thisPatnt-> {Registration / State / Division / Branch / LpuID};   // идентификатор СТП
+                @patProfile->{attachBranchId} := @thisPatnt-> {Registration / State / Division / Branch / LpuID};   // идентификатор СТП (филиала)
                 @patProfile->{attachState} := @thisPatnt-> {Registration / State / StateNumber};                    // номер участка
 
                 @currYear := if (Cast(DatePart("Year", param(CURRENT_DATE)) - DatePart("Year", @thisPatnt->{Birthday}), "Int32") = 21 

@@ -19,6 +19,8 @@ begin(patID, RoutesList, selEmergEvent, routeRecords, Route, RouteRes, EmergEven
             @selEmergEvent := select top 1 {EventID},{EventDate},{AmbulanceCard / CardLpu / Name}
                         from "AKUZ.EMERGENCY_EVENT" 
                         where {AmbulanceCard / Patient / PatientID} = @patID
+                            and {CloseDate} = Null()
+                            and DateAdd("Month", 6, {EventDate}) > param(CURRENT_DATE)
                         order by {EventDate} desc;
             // @qrEmergEvent := query top 1 {EventID}
             //             from "AKUZ.EMERGENCY_EVENT" 
